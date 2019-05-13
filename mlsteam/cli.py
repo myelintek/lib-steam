@@ -23,6 +23,7 @@ from container import container
 from ds import data
 from checkpoint import checkpoint
 from service import service
+from info import info
 
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
@@ -41,6 +42,7 @@ cli.add_command(project)
 cli.add_command(container)
 cli.add_command(checkpoint)
 cli.add_command(service)
+cli.add_command(info)
 
 
 if __name__ == '__main__':
