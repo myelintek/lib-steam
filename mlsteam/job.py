@@ -13,9 +13,10 @@ from api import MyelindlApi, MyelindlApiError
 @click.option('--module-name', help='task entry file (for package jobs)')
 @click.option('--image-tag', help='docker images name (for container jobs)')
 @click.option('--dataset-path', help='dataset path used for container jobs (for container jobs)')
+@click.option('--parameters', help='job hyperparameters for parallel run or hpo')
 @click.option('--num-gpu', type=click.INT, default=1, help='number of GPU (default: 1)')
 @click.argument('user-args', nargs=-1, type=click.Path())
-def training(job_name, package_path, module_name, image_tag, dataset_path, num_gpu, user_args):
+def training(job_name, package_path, module_name, image_tag, dataset_path, parameters, num_gpu, user_args):
     dst_path = ''
     job_id = None
     project = os.getenv('PROJECT', None)
@@ -27,6 +28,11 @@ def training(job_name, package_path, module_name, image_tag, dataset_path, num_g
             if not (package_path.startswith("ssh") or package_path.startswith("http")):
                 click.echo('--package-path: {} not exists!'.format(package_path))
                 return
+    if parameters:
+        if not os.path.exists(parameters):
+            click.echo('parameter file: {} not exists'.format(parameters))
+        with open(parameters, 'r') as pfile:
+            parameters = pfile.read()
     try:
         api = MyelindlApi()
         args = [a for a in user_args]
@@ -39,6 +45,7 @@ def training(job_name, package_path, module_name, image_tag, dataset_path, num_g
             job_name=job_name,
             module_name=module_name,
             pkg_path=package_path,
+            parameters=parameters,
             num_gpu=num_gpu,
             user_args=' '.join(args),
         )

@@ -362,8 +362,8 @@ class MyelindlApi(object):
     # Jobs
     ###########################
     def job_create(self, project, image_tag, dataset_path, job_name, module_name,
-                   pkg_path, num_gpu, user_args):
-        return self._request('jobs',
+                   pkg_path, parameters, num_gpu, user_args):
+        return self._request('jobs', 
             method='post',
             access_token=self.access_token,
             data={'username': self.username,
@@ -375,6 +375,7 @@ class MyelindlApi(object):
                 'pkg-path': pkg_path,
                 'num-gpu': num_gpu,
                 'user-args': user_args,
+                'parameters': parameters,
             }
         )
 
@@ -509,6 +510,7 @@ class MyelindlApi(object):
             raise MyelindlApiError({'error': u'{}:{}'.format(response.status_code, err_msg)})
        
     def _process_output(self, response, format, output_file_dir=''):
+        print response.text
         result = None
         if format == 'json':
             try:
