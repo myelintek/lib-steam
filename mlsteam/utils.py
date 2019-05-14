@@ -1,7 +1,4 @@
 import os
-import ftplib
-import ftputil
-import ftputil.session
 
 
 def data_upload(host, port, username, keyfile, local_dir, remote_dir):
@@ -12,25 +9,25 @@ def data_upload(host, port, username, keyfile, local_dir, remote_dir):
     ))
 
 
-def ftp_upload_dir(host, username, password, local_dir, remote_dir):
-    sf = ftputil.session.session_factory(
-        base_class=ftplib.FTP,
-        port=21,
-        use_passive_mode=False
-    )
-    local_dir = local_dir.strip(os.sep)
-    with ftputil.FTPHost(host, username, password, session_factory=sf) as ftp:
-        for base, dirs, files in os.walk(local_dir):
-            remote_base = base.replace(local_dir, remote_dir)
-
-            if not ftp.path.exists(remote_base):
-                ftp.mkdir(remote_base)
-
-            for f in files:
-                local_f = os.path.join(base, f)
-                remote_f = ftp.path.join(remote_base, f)
-                ftp.upload(local_f, remote_f)
-
+#def ftp_upload_dir(host, username, password, local_dir, remote_dir):
+#    sf = ftputil.session.session_factory(
+#        base_class=ftplib.FTP,
+#        port=21,
+#        use_passive_mode=False
+#    )
+#    local_dir = local_dir.strip(os.sep)
+#    with ftputil.FTPHost(host, username, password, session_factory=sf) as ftp:
+#        for base, dirs, files in os.walk(local_dir):
+#            remote_base = base.replace(local_dir, remote_dir)
+#
+#            if not ftp.path.exists(remote_base):
+#                ftp.mkdir(remote_base)
+#
+#            for f in files:
+#                local_f = os.path.join(base, f)
+#                remote_f = ftp.path.join(remote_base, f)
+#                ftp.upload(local_f, remote_f)
+#
 
 def sizeof_fmt(num, suffix='B'):
     for unit in ['','K','M','G','T','P','E','Z']:

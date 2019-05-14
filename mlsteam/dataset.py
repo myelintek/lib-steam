@@ -1,7 +1,6 @@
 import os
 import click
 import uuid
-import ftputil
 from api import MyelindlApi, MyelindlApiError
 from utils import sizeof_fmt
 
