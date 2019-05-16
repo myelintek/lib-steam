@@ -11,7 +11,7 @@ def info():
         click.echo("Version: {}, sha: {}".format(version.__version__, version.__sha__))
         click.echo("Server: {}".format(api.host))
         click.echo("Username: {}".format(api.username))
-        click.echo("Data Port: {}".format(self.data_port))
+        click.echo("Data Port: {}".format(api.data_port))
     except MyelindlApiError as e:
         click.echo(u'Fail due to {}'.format(e))
 
