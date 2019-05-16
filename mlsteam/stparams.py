@@ -7,23 +7,18 @@ import logging
 def get_value(key, default=None):
     _dir = os.getenv('JOB_DIR', None)
     if not _dir:
-        if default:
-            logging.warning("Use default value for `{}`".format(key))
-            return default
-        raise ValueError("Environment error")
+        logging.warning("use default value for {}, JOB_DIR environment variable undefined.".format(key))
+        return default
     param_file = os.path.join(_dir, "param.yml")
     if not os.path.exists(param_file):
-        if default:
-            logging.warning("Use default value for `{}`".format(key))
-            return default
-        raise ValueError("Parameters undefined")
+        logging.warning("use default value for {}, param.yml not found.".format(key))
+        return default
     params = {}
     with open(param_file, 'r') as f:
         params = yaml.safe_load(f)
     for k, v in params.iteritems():
         if key == k:
+            logging.info("use {}: {}".format(k, v))
             return params[key]
-    if default:
-        logging.warning("Use default value for `{}`".format(key))
-        return default
-    raise ValueError("Can not find '{}' from get_value()".format(key))
+    logging.warning("use default value for {}, undefined variable.".format(key))
+    return default
