@@ -283,6 +283,38 @@ class MyelindlApi(object):
             )
 
     ###########################
+    # Work
+    ###########################
+    def work_list(self):
+        return self._request('works',
+            method='get',
+            access_token=self.access_token,
+        )
+
+    def work_create(self, container, dataset, num_gpu, port, user_args):
+        return self._request('works',
+            method='post',
+            access_token=self.access_token,
+            data={'container': container,
+                  'num_gpu': num_gpu,
+                  'dataset': dataset,
+                  'port': port,
+                  'user_args': user_args}
+        )
+
+    def work_delete(self, id):
+        return self._request('works/{}'.format(id),
+            method='delete',
+            access_token=self.access_token,
+        )
+
+    def work_info(self, id):
+        return self._request('works/{}'.format(id),
+            method='get',
+            access_token=self.access_token,
+        )
+
+    ###########################
     # Service
     ###########################
     def service_list(self):
@@ -510,7 +542,6 @@ class MyelindlApi(object):
             raise MyelindlApiError({'error': u'{}:{}'.format(response.status_code, err_msg)})
        
     def _process_output(self, response, format, output_file_dir=''):
-        print response.text
         result = None
         if format == 'json':
             try:
