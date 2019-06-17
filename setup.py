@@ -5,8 +5,9 @@ from subprocess import check_output
 LOCAL_DIR = os.path.dirname(os.path.abspath(__file__))
 
 # Get current __version__
-version_locals = {}
-execfile(os.path.join(LOCAL_DIR, 'mlsteam', 'version.py'), {}, version_locals)
+# version_locals = {}
+# execfile(os.path.join(LOCAL_DIR, 'mlsteam', 'version.py'), {}, version_locals)
+exec(open(os.path.join(LOCAL_DIR, 'mlsteam', 'version.py')).read())
 
 # Get sha ID
 sha=0
@@ -27,22 +28,17 @@ with open(os.path.join(LOCAL_DIR, 'requirements.txt'), 'r') as infile:
 
 setuptools.setup(
     name='mlsteam',
-    version=version_locals['__version__'],
+    version=__version__,
     description="Deep Learning GPU Training System CLI Tool",
     license='BSD',
-    classifiers=[
-        'Framework :: Flask',
-        'License :: OSI Approved :: BSD License',
-        'Programming Language :: Python :: 2.7',
-        'Programming Language :: Python :: 2 :: Only',
-        'Topic :: Scientific/Engineering :: Artificial Intelligence',
-    ],
     keywords='mlsteam',
     packages=setuptools.find_packages(),
+    use_2to3=True,
     include_package_data=True,
     zip_safe=False,
     install_requires=requirements,
-    scripts=['bin/mc'],
+    #scripts=['bin/mc'],
+    data_files=[('bin', ['bin/mc'])],
     entry_points = {
         'console_scripts':['mlsteam=mlsteam.cli:cli'],
     }

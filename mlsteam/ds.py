@@ -2,7 +2,7 @@ import os
 import re
 import click
 from subprocess import check_output, STDOUT
-from api import MyelindlApi, MyelindlApiError
+from .api import MyelindlApi, MyelindlApiError
 
 
 ## Buckets ##
@@ -60,7 +60,8 @@ def ls(target):
         if target:
             args = ["{}".format(a) for a in target]
             objs = " ".join(args)
-            out = check_output("mc ls {}".format(objs), shell=True)
+            out_b = check_output("mc ls {}".format(objs), shell=True)
+            out = bytes.decode(out_b)
             for line in out.splitlines():
                 if 'run-' not in line:
                     match = re.search('(\[.*\])\s+([^\s]+B) (.*)', line)
