@@ -366,11 +366,12 @@ class MyelindlApi(object):
     ###########################
     # Projects
     ###########################
-    def project_create(self, name):
+    def project_create(self, name, dataset):
         return self._request('projects',
             method='post',
             access_token=self.access_token,
-            data={'name':name}
+            data={'name':name,
+                  'dataset':dataset}
         )
 
     def project_delete(self, project_id):

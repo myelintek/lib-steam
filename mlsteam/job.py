@@ -24,6 +24,7 @@ def training(job_name, package_path, module_name, image_tag, dataset_path, param
         click.echo("PROJECT not defined, use '{}' as project name".format(job_name))
         project = job_name
     if package_path:
+        package_path = os.path.expanduser(package_path)
         if not os.path.exists(package_path):
             if not (package_path.startswith("ssh") or package_path.startswith("http")):
                 click.echo('--package-path: {} not exists!'.format(package_path))

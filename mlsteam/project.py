@@ -4,11 +4,15 @@ from datetime import datetime
 from api import MyelindlApi, MyelindlApiError
 
 @click.command()
-@click.option('name', '--name', required=True, help='project name')
-def create(name):
+@click.argument('name', required=True)
+@click.argument('dataset', required=True)
+def create(name, dataset):
     try:
+        if dataset.startswith('bk/'):
+            click.echo("no need 'bk/' prefix for dataset.")
+            return
         api = MyelindlApi()
-        result = api.project_create(name)
+        result = api.project_create(name, dataset)
 
         click.echo('{}'.format(result['id']))
     except MyelindlApiError, e:
