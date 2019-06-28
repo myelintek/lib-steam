@@ -13,24 +13,21 @@ def mk_bk(name):
     try:
         bk_name = None
         if name.startswith('bk/'):
-            check_output("mc mb {}".format(name), shell=True, stderr=STDOUT)
             bk_name = name[3:]
         else:
-            check_output("mc mb bk/{}".format(name), shell=True, stderr=STDOUT)
             bk_name = name
         # register to server
         api = MyelindlApi()
         api.bucket_add(bk_name)
     except Exception as e:
-        click.echo(click.style("Bucket created failed. Bucket name contains invalid characters", fg='red'))
+        click.echo(click.style("Bucket created failed. {}".format(e), fg='red'))
         return
     click.echo(click.style("Bucket `{}` created successfully.".format(name), fg='green'))
 
 
 @click.command(name="rb")
-@click.option('--force', is_flag=True, help="allow a recursive remove operation")
 @click.argument('name', required=True)
-def rm_bk(force, name):
+def rm_bk(name):
     """remove a bucket"""
     try:
         bk_name = name
@@ -39,14 +36,7 @@ def rm_bk(force, name):
         api = MyelindlApi()
         api.bucket_del(bk_name)
     except Exception as e:
-        pass
-    try:
-        if force:
-            check_output("mc rb --force bk/{}".format(bk_name), shell=True, stderr=STDOUT)
-        else:
-            check_output("mc rb bk/{}".format(bk_name), shell=True, stderr=STDOUT)
-    except Exception as e:
-        click.echo("Bucket deleted failed. please add --force to force delete the bucket")
+        click.echo(click.style("Bucket delete failed. {}".format(e), fg='red'))
         return
     click.echo(click.style("Bucket `{}` deleted successfully.".format(name), fg='green'))
  
