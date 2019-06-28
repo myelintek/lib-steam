@@ -10,19 +10,17 @@ from api import MyelindlApi, MyelindlApiError
 @click.command()
 @click.option('--job-name', required=True, help='job name')
 @click.option('--package-path', help='package path (for package jobs)')
-@click.option('--module-name', help='task entry file (for package jobs)')
 @click.option('--image-tag', help='docker images name (for container jobs)')
-@click.option('--dataset-path', help='dataset path used for container jobs (for container jobs)')
 @click.option('--parameters', help='job hyperparameters for parallel run or hpo')
 @click.option('--num-gpu', type=click.INT, default=1, help='number of GPU (default: 1)')
 @click.argument('user-args', nargs=-1, type=click.Path())
-def training(job_name, package_path, module_name, image_tag, dataset_path, parameters, num_gpu, user_args):
+def training(job_name, package_path, image_tag, parameters, num_gpu, user_args):
     dst_path = ''
     job_id = None
     project = os.getenv('PROJECT', None)
     if project is None:
-        click.echo("PROJECT not defined, use '{}' as project name".format(job_name))
-        project = job_name
+        click.echo("environment variable PROJECT not defined!, use export PROJECT=<project name> before training.")
+        return
     if package_path:
         package_path = os.path.expanduser(package_path)
         if not os.path.exists(package_path):
@@ -42,9 +40,7 @@ def training(job_name, package_path, module_name, image_tag, dataset_path, param
         result = api.job_create(
             project=project,
             image_tag=image_tag,
-            dataset_path=dataset_path,
             job_name=job_name,
-            module_name=module_name,
             pkg_path=package_path,
             parameters=parameters,
             num_gpu=num_gpu,

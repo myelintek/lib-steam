@@ -394,7 +394,7 @@ class MyelindlApi(object):
     ###########################
     # Jobs
     ###########################
-    def job_create(self, project, image_tag, dataset_path, job_name, module_name,
+    def job_create(self, project, image_tag, job_name,
                    pkg_path, parameters, num_gpu, user_args):
         return self._request('jobs', 
             method='post',
@@ -402,9 +402,7 @@ class MyelindlApi(object):
             data={'username': self.username,
                 'project': project,
                 'image-tag': image_tag,
-                'dataset-path': dataset_path,
                 'job-name': job_name,
-                'module-name': module_name,
                 'pkg-path': pkg_path,
                 'num-gpu': num_gpu,
                 'user-args': user_args,

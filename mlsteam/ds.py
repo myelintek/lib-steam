@@ -46,7 +46,7 @@ def rm_bk(force, name):
         else:
             check_output("mc rb bk/{}".format(bk_name), shell=True, stderr=STDOUT)
     except Exception as e:
-        click.echo("Bucket deleted failed. {}".format(e))
+        click.echo("Bucket deleted failed. please add --force to force delete the bucket")
         return
     click.echo(click.style("Bucket `{}` deleted successfully.".format(name), fg='green'))
  
