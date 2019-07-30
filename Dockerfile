@@ -17,6 +17,10 @@ RUN sed -i 's/archive.ubuntu.com/tw.archive.ubuntu.com/g' /etc/apt/sources.list 
     wget \
   && apt-get clean && rm -rf /var/lib/apt/lists/*
 
+RUN pip3 install wheel \
+                 pytest \
+                 pexpect
+
 COPY . /build/
 # build & install mlsteam_cli
 RUN cd /build && \
