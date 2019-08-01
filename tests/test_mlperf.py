@@ -18,7 +18,7 @@ def test_data_mb():
     assert ret==0
 
 def test_data_cp():
-    ret=system("mlsteam data cp /workspace/test/fake_dataset/file1 bk/test")
+    ret=system("mlsteam data cp /workspace/tests/fake_dataset/file1 bk/test")
     assert ret==0
 
 def test_data_ls():
