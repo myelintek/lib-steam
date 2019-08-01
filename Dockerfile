@@ -28,5 +28,5 @@ RUN cd /build && \
     pip3 install dist/mlsteam-*
 
 COPY tests /workspace/tests
-
+COPY example /workspace/example
 WORKDIR /workspace
