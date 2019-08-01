@@ -29,5 +29,8 @@ RUN cd /build && \
     pip3 install dist/mlsteam-*
 
 COPY tests /workspace/tests
-COPY example /workspace/example
 WORKDIR /workspace
+RUN cd /workspace && \
+    mkdir example && \
+    cd example && \
+    git clone https://github.com/myelintek/cifar10_estimator.git
