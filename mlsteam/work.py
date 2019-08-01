@@ -16,6 +16,7 @@ def create(container, dataset, num_gpu, port, user_args):
         click.echo(result)
     except MyelindlApiError, e:
         click.echo("create work failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -26,6 +27,7 @@ def list():
         click.echo(json.dumps(result, indent=2, sort_keys=True))
     except MyelindlApiError, e:
         click.echo("list work failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -36,6 +38,7 @@ def delete(id):
         result = api.work_delete(id)
     except MyelindlApiError, e:
         click.echo("delete a work failed, {}".format(e))
+        raise
 
 @click.command()
 @click.argument('id', required=True)
@@ -46,6 +49,7 @@ def info(id):
         click.echo(json.dumps(result, indent=2, sort_keys=True))
     except MyelindlApiError, e:
         click.echo("list work failed, {}".format(e))
+        raise
 
 
 @click.group(help='Groups of commands to manage works')

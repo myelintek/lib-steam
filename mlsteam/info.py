@@ -14,4 +14,5 @@ def info():
         click.echo("Data Port: {}".format(api.data_port))
     except MyelindlApiError as e:
         click.echo(u'Fail due to {}'.format(e))
+        raise
 

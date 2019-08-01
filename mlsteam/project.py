@@ -17,6 +17,7 @@ def create(name, dataset):
         click.echo('{}'.format(result['id']))
     except MyelindlApiError, e:
         click.echo("new project failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -47,6 +48,7 @@ def list(is_json):
         click.echo('=' * len(header))
     except MyelindlApiError, e:
         click.echo("list project failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -57,6 +59,7 @@ def delete(id):
         result = api.project_delete(id)
     except MyelindlApiError, e:
         click.echo("delete a project failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -78,6 +81,7 @@ def info(id):
         click.echo('='* len(header))
     except MyelindlApiError, e:
         click.echo("show project info failed, {}".format(e))
+        raise
 
 
 @click.group(help='Groups of commands to manage project')

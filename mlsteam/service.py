@@ -12,6 +12,7 @@ def create(id):
         click.echo(result)
     except MyelindlApiError, e:
         click.echo("create service failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -22,6 +23,7 @@ def list():
         click.echo(json.dumps(result, indent=2, sort_keys=True))
     except MyelindlApiError, e:
         click.echo("list service failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -32,6 +34,7 @@ def delete(id):
         result = api.service_delete(id)
     except MyelindlApiError, e:
         click.echo("delete a service failed, {}".format(e))
+        raise
 
 
 @click.group(help='Groups of commands to manage services')

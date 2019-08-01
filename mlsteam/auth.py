@@ -27,4 +27,5 @@ def login(address, username, data_port):
             click.echo(click.style("Warning, mlsteam client and server mismatch, please upgrade mlsteam.", fg='yellow'))
     except MyelindlApiError as e:
         click.echo(u'Fail due to {}'.format(e))
+        raise
 

@@ -17,7 +17,7 @@ def list(offset, limit):
         )
     except MyelindlApiError as e:
         click.echo('Fail due to {}'.format(str(e)))
-        return
+        raise
 
     template = '| {:>30}|'
     header = template.format('model')
@@ -48,7 +48,7 @@ def versions(tag, offset, limit):
         )
     except MyelindlApiError as e:
         click.echo('Fail due to {}'.format(str(e)))
-        return
+        raise
 
     longest = max(len(d['tag']) for d in results)
     if longest < 10:
@@ -88,7 +88,7 @@ def pull(tag, output_dir):
         click.echo('Finish model pull {}' .format(tag))
     except MyelindlApiError as e:
         click.echo('Fail due to {}'.format(str(e)))
-        return
+        raise
 
 
 
@@ -119,6 +119,7 @@ def push(tag, model_dir, description, type):
     except MyelindlApiError as e:
         print str(e)
         click.echo( 'Dataset publish fail, due to {}'.format(str(e)))
+        raise
 
 
 @click.command()
@@ -130,7 +131,7 @@ def delete(tag):
         click.echo('Model deleted {}'.format(tag))
     except MyelindlApiError as e:
         click.echo('Fail due to {}'.format(str(e)))
-        return
+        raise
 
 
 
@@ -143,7 +144,7 @@ def info(tag):
         result = api.model_info(tag)
     except MyelindlApiError as e:
         click.echo('Fail due to {}'.format(str(e)))
-        return
+        raise
     
     longest = max(len(str(v)) for v in result.values())
     longest = longest if longest >= 10 else 10

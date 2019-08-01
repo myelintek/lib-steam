@@ -61,6 +61,7 @@ def training(job_name, package_path, image_tag, parameters, num_gpu, user_args):
         if job_id:
             api.job_delete(job_id)
         click.echo("submit failed, %s"% str(e))
+        raise
 
 
 @click.command()
@@ -93,6 +94,7 @@ def list(is_json):
         click.echo('=' * len(header))
     except Exception, e:
         click.echo("submit failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -103,6 +105,7 @@ def log(job_id):
         click.echo(api.job_log(job_id))
     except MyelindlApiError, e:
         click.echo("failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -114,6 +117,7 @@ def delete(job_id):
         click.echo('Job {} deleted '.format(job_id))
     except Exception, e:
         click.echo("failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -125,6 +129,7 @@ def abort(job_id):
         click.echo('Job {} aborted '.format(job_id))
     except Exception, e:
         click.echo("failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -135,6 +140,7 @@ def download(job_id):
         api.job_download(job_id)
     except Exception, e:
         click.echo("failed, {}".format(e))
+        raise
 
 
 @click.group(help='Groups of commands to manage submit')
