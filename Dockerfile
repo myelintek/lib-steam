@@ -33,4 +33,5 @@ WORKDIR /workspace
 RUN cd /workspace && \
     mkdir example && \
     cd example && \
-    git clone https://github.com/myelintek/cifar10_estimator.git
+    git clone https://github.com/myelintek/cifar10_estimator.git && \
+    python3 /workspace/example/cifar10_estimator/generate_cifar10_tfrecords.py --data-dir=/workspace/cifar10

@@ -39,7 +39,6 @@ def test_data_rb():
     assert ret==0
 
 def test_generate_cifar10():
-    system("python3 /workspace/example/cifar10_estimator/generate_cifar10_tfrecords.py --data-dir=/workspace/cifar10")
     system("mlsteam data mb bk/cifar10")
     system("mlsteam data cp -r /workspace/cifar10/* bk/cifar10")
     system("mlsteam data ls bk/cifar10")
