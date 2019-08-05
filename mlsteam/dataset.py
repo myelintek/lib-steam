@@ -68,6 +68,7 @@ def publish(data_dir, name, id, type, description):
         click.echo('Dataset {} published with id {}'.format(name, result['id']))
     except MyelindlApiError as e:
         click.echo(u'Dataset publish fail, due to {}'.format(str(e)))
+        raise
 
 
 @click.command()
@@ -79,7 +80,7 @@ def unpublish(id):
         click.echo('Dataset {} unpublished'.format(id))
     except MyelindlApiError as e :
         click.echo('Fail due to {}'.format(str(e)))
-        return
+        raise
 
 
 @click.command()
@@ -89,7 +90,7 @@ def list():
         result = api.dataset_list()
     except MyelindlApiError as e :
         click.echo('Fail due to {}'.format(str(e)))
-        return
+        raise
     longest = 10
     if result['datasets']:
         longest = max(len(d['name']) for d in result['datasets'])
@@ -123,7 +124,7 @@ def info(id):
         result = api.get_dataset_info(id)
     except MyelindlApiError as e :
         click.echo('Fail due to {}'.format(str(e)))
-        return
+        raise
     
     template = '| {:>20} | {:>30}|'
     header = template.format('Field', 'Value')
@@ -153,6 +154,7 @@ def browse(id, dir):
                 click.echo(file['basename'])
     except Exception as e:
         click.echo("Fail due to {}".format(str(e)))
+        raise
 @click.group(help='Groups of commands to manage datasets')
 def dataset():
     pass

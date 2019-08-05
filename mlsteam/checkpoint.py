@@ -12,6 +12,7 @@ def download(id):
         click.echo(result)
     except MyelindlApiError as e:
         click.echo("download checkpoint failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -22,6 +23,7 @@ def list():
         click.echo(json.dumps(result, indent=2, sort_keys=True))
     except MyelindlApiError as e:
         click.echo("list checkpoint failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -32,6 +34,7 @@ def delete(id):
         result = api.checkpoint_delete(id)
     except MyelindlApiError as e:
         click.echo("delete a checkpoint failed, {}".format(e))
+        raise
 
 
 @click.command()
@@ -43,6 +46,7 @@ def info(id):
         click.echo(json.dumps(result, indent=2, sort_keys=True))
     except MyelindlApiError as e:
         click.echo("show checkpoint info failed, {}".format(e))
+        raise
 
 
 @click.group(help='Groups of commands to manage checkpoints')

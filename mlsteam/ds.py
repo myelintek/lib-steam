@@ -16,12 +16,12 @@ def mk_bk(name):
             bk_name = name[3:]
         else:
             bk_name = name
-        # register to server
+        #register to server
         api = MyelindlApi()
         api.bucket_add(bk_name)
     except Exception as e:
         click.echo(click.style("Bucket created failed. {}".format(e), fg='red'))
-        return
+        raise 
     click.echo(click.style("Bucket `{}` created successfully.".format(name), fg='green'))
 
 
@@ -37,7 +37,7 @@ def rm_bk(name):
         api.bucket_del(bk_name)
     except Exception as e:
         click.echo(click.style("Bucket delete failed. {}".format(e), fg='red'))
-        return
+        raise 
     click.echo(click.style("Bucket `{}` deleted successfully.".format(name), fg='green'))
  
 
@@ -63,6 +63,7 @@ def ls(target):
             click.echo(click.style("Are you want to list bucket? try `steam data ls bk/`", fg='green'))
     except Exception as e:
         click.echo(click.style("ls failed. {}".format(e), fg='red'))
+        raise 
 
 
 @click.command()
@@ -75,6 +76,7 @@ def cat(source):
         os.system("mc cat {}".format(objs))
     except Exception as e:
         click.echo(click.style("cat object failed. {}".format(e), fg='red'))
+        raise 
 
 
 @click.command()
@@ -88,6 +90,7 @@ def head(lines, source):
         os.system("mc head -n {} {}".format(lines, objs))
     except Exception as e:
         click.echo(click.style("cat object failed. {}".format(e), fg='red'))
+        raise 
 
 
 @click.command()
@@ -106,6 +109,7 @@ def cp(recursive, source, target):
             os.system("mc cp {} {}".format(objs, target))
     except Exception as e:
         click.echo(click.style("copy failed. {}".format(e), fg='red'))
+        raise 
 
 
 @click.command()
@@ -122,6 +126,7 @@ def rm(recursive, target):
             os.system("mc rm {}".format(objs))
     except Exception as e:
         click.echo(click.style("remove failed. {}".format(e), fg='red'))
+        raise 
 
 
 @click.command()
@@ -141,6 +146,7 @@ def mirror(overwrite, remove, source, target):
         os.system(cmd)
     except Exception as e:
         click.echo(click.style("mirror failed. {}".format(e), fg='red'))
+        raise 
 
 
 @click.group(help='Groups of commands to manage datasets')

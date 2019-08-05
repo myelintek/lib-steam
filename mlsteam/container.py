@@ -23,6 +23,7 @@ def list():
         click.echo('=' * len(header))
     except MyelindlApiError as e:
         click.echo(str(e))
+        raise
 
 
 @click.command()
@@ -34,6 +35,7 @@ def delete(id):
         click.echo(result) 
     except MyelindlApiError as e:
         click.echo(str(e))
+        raise
 
 
 @click.command()
@@ -45,6 +47,7 @@ def pull(tag):
         click.echo(result) 
     except MyelindlApiError as e:
         click.echo(str(e))
+        raise
 
 
 @click.group(help='Group of commands to manage container images')
