@@ -20,7 +20,7 @@ RUN sed -i 's/archive.ubuntu.com/tw.archive.ubuntu.com/g' /etc/apt/sources.list 
 RUN pip3 install wheel \
                  pytest \
                  pexpect \
-                 tensorflow
+                 tensorflow==1.14.0
 
 COPY . /build/
 # build & install mlsteam_cli
