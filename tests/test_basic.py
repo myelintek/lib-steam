@@ -5,7 +5,7 @@ import time
 from os import system
 
 
-def test_login():
+def setup_module(module):
     child = pexpect.spawn('mlsteam login --address 140.96.29.151 --username superuser')
     child.expect ('password:')
     child.sendline ('superuser')
