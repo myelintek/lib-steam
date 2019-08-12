@@ -4,6 +4,7 @@ import pytest
 import json
 import os
 import re
+from os import system
 
 headers={}
 base_url='http://140.96.29.151/api'
@@ -24,19 +25,29 @@ def setup_module(module):
         data = json.load(cred)
     headers.update({'Authorization': 'Bearer {}'.format(data['access_token'])})
 
+    system("mlsteam data mb bk/cifar10")
+    system("mlsteam data cp -r /workspace/cifar10/* bk/cifar10")
+    system("mlsteam data ls bk/cifar10")
+    
 
 def teardown_module(module):
     """ teardown any state that was previously setup with a setup_module
     method.
     """
-    pytest.skip()
+#    pytest.skip()
+    system("mlsteam data rb bk/cifar10") 
 
 
 """
  user account related test cases
 """
 def test_user_list():
-    pytest.skip()
+    url = '{}/{}'.format(base_url, 'users')
+    data = None
+    response = requests.get(url, timeout=tout, headers=headers)
+    print(response.text)
+    assert response.status_code == 200
+
 
 def test_user_add():
     pytest.skip()
@@ -51,19 +62,63 @@ def test_user_remove():
 """
  project related test cases
 """
+
+def test_project_create_private():
+    url = '{}/{}'.format(base_url, 'projects')
+    data1 = json.dumps({ 'name':'test_api_project', 'dataset':'cifar10', 'is_member_only':True })
+    response = requests.post(url, timeout=tout, headers=headers, data=data1) #TODO pass is_member_only
+    print(response.text)
+    assert response.status_code == 200
+
+
+def test_project_create_public():
+    url = '{}/{}'.format(base_url, 'projects')
+    data = None
+    response = requests.post(url, timeout=tout, headers=headers, data={'name':'test_api_project_public', 'dataset':'cifar10'}) #TODO pass is_member_only
+    print(response.text)
+    assert response.status_code == 200
+
+
 def test_project_list():
     url = '{}/{}'.format(base_url, 'projects')
     data = None
     response = requests.get(url, timeout=tout, headers=headers)
+    dic=response.json()
+    print(dic)
     assert response.status_code == 200
 
 
-def test_project_create_private():
-    pytest.skip()
+
+def test_project_info():
+    url = '{}/{}'.format(base_url, 'projects')
+    data = None
+    response = requests.get(url, timeout=tout, headers=headers)
+    dic=response.json()
+
+    for proj in dic:
+        if proj['name'] == 'test_api_project_public' or  proj['name'] == 'test_api_project':
+            url = '{}/{}/{}'.format(base_url, 'projects', proj['id'])
+            data = None
+            response = requests.get(url, timeout=tout, headers=headers)
+            print(response.text)
+            assert response.status_code == 200
+
 
 
 def test_project_member_list():
-    pytest.skip()
+    url = '{}/{}'.format(base_url, 'projects')
+    data = None
+    response = requests.get(url, timeout=tout, headers=headers)
+    dic=response.json()
+
+    for proj in dic:
+        if proj['name'] == 'test_api_project_public' or  proj['name'] == 'test_api_project':
+            url = '{}/{}/{}/{}'.format(base_url, 'projects', proj['id'], 'members')
+            data = None
+            response = requests.get(url, timeout=tout, headers=headers)
+            print(response.text)
+            assert response.status_code == 200
+
 
 
 def test_project_member_add():
@@ -74,23 +129,18 @@ def test_project_member_remove():
     pytest.skip()
 
 
-def test_project_create_public():
-    pytest.skip()
-
-
-def test_project_info():
-    pytest.skip()
-
-
-def test_project_delete():
-    pytest.skip()
 
 
 """
  work related test cases
 """
 def test_work_create():
-    pytest.skip()
+    print("start work create")
+    url = '{}/{}'.format(base_url, 'works')
+    data = {'container':'myelintek/python-gpu:v5', 'num_gpu':'1', 'dataset':'cifar10', 'project':'test_api_project_public', 'port_list':'8888', 'user_args':"jupyter-notebook --ip 0.0.0.0 --allow-root --NotebookApp.token='JOB_ID'"} 
+    response = requests.post(url, timeout=tout, headers=headers, data=data) 
+    print(response.text)
+    print("end work create")
 
 
 def test_work_list():
@@ -100,6 +150,23 @@ def test_work_list():
 def test_work_info():
     pytest.skip()
 
-
+"""
+Cleanup
+"""
 def test_work_delete():
     pytest.skip()
+
+
+def test_project_delete():
+    url = '{}/{}'.format(base_url, 'projects')
+    data = None
+    response = requests.get(url, timeout=tout, headers=headers)
+    dic=response.json()
+
+    for proj in dic:
+        if proj['name'] == 'test_api_project_public' or  proj['name'] == 'test_api_project':
+            url = '{}/{}/{}'.format(base_url, 'projects', proj['id'])
+            data = None
+            response = requests.delete(url, timeout=tout, headers=headers)
+            print(response.text)
+            assert response.status_code == 200

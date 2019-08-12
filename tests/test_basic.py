@@ -45,8 +45,8 @@ def test_generate_cifar10():
 
 
 def test_project_create():
-    system("mlsteam project create test_project cifar10")
-
+    ret=system("mlsteam project create test_project cifar10")
+    assert ret==0
 
 def test_job_submit():
     ret=system("PROJECT=test_project mlsteam job submit training --job-name job1 --package-path /workspace/example/cifar10_estimator -- python2 cifar10_main.py --data-dir /dataset --job-dir /jobs --train-steps=100")
