@@ -65,8 +65,9 @@ def test_user_remove():
 
 def test_project_create_private():
     url = '{}/{}'.format(base_url, 'projects')
-    data1 = json.dumps({ 'name':'test_api_project', 'dataset':'cifar10', 'is_member_only':True })
-    response = requests.post(url, timeout=tout, headers=headers, data=data1) #TODO pass is_member_only
+    #data1 = json.dumps({ 'name':'test_api_project', 'dataset':'cifar10', 'is_member_only':True })
+    #response = requests.post(url, timeout=tout, headers=headers, data=data1) #TODO pass is_member_only
+    response = requests.post(url, timeout=tout, headers=headers, data={ 'name':'test_api_project', 'dataset':'cifar10' }) #TODO pass is_member_only
     print(response.text)
     assert response.status_code == 200
 
@@ -135,26 +136,49 @@ def test_project_member_remove():
  work related test cases
 """
 def test_work_create():
-    print("start work create")
     url = '{}/{}'.format(base_url, 'works')
     data = {'container':'myelintek/python-gpu:v5', 'num_gpu':'1', 'dataset':'cifar10', 'project':'test_api_project_public', 'port_list':'8888', 'user_args':"jupyter-notebook --ip 0.0.0.0 --allow-root --NotebookApp.token='JOB_ID'"} 
     response = requests.post(url, timeout=tout, headers=headers, data=data) 
     print(response.text)
-    print("end work create")
 
 
 def test_work_list():
-    pytest.skip()
-
+    url = '{}/{}'.format(base_url, 'works')
+    data = None
+    response = requests.get(url, timeout=tout, headers=headers)
+    print(response.text)
 
 def test_work_info():
-    pytest.skip()
+    url = '{}/{}'.format(base_url, 'works')
+    data = None
+    response = requests.get(url, timeout=tout, headers=headers)
+    dic=response.json()
+
+    for work in dic:
+        if work['project'] == 'test_api_project_public' or  work['project'] == 'test_api_project':
+            url = '{}/{}/{}'.format(base_url, 'works', work['id'])
+            data = None
+            response = requests.get(url, timeout=tout, headers=headers)
+            print(response.text)
+            assert response.status_code == 200
+
 
 """
 Cleanup
 """
 def test_work_delete():
-    pytest.skip()
+    url = '{}/{}'.format(base_url, 'works')
+    data = None
+    response = requests.get(url, timeout=tout, headers=headers)
+    dic=response.json()
+
+    for work in dic:
+        if work['project'] == 'test_api_project_public' or  work['project'] == 'test_api_project':
+            url = '{}/{}/{}'.format(base_url, 'works', work['id'])
+            data = None
+            response = requests.delete(url, timeout=tout, headers=headers)
+            print(response.text)
+            assert response.status_code == 200
 
 
 def test_project_delete():

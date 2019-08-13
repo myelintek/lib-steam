@@ -71,7 +71,7 @@ def test_job_status():
         job_status=job_status.rstrip()
         print(job_status)
         if job_status == "Running" or job_status == "Waiting" or job_status == "Initializing":
-            time.sleep(60)
+            time.sleep(10)
         elif job_status == "Error" or job_status == "Stopped":
             raise Exception('Job status: '+job_status)
         elif job_status != "Done":
