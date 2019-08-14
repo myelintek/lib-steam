@@ -4,6 +4,7 @@ import pytest
 import json
 import os
 import re
+import time
 from os import system
 
 headers={}
@@ -123,17 +124,36 @@ def test_project_member_list():
 
 
 def test_project_member_add():
-    pytest.skip()
+    url = '{}/{}'.format(base_url, 'projects')
+    data = None
+    response = requests.get(url, timeout=tout, headers=headers)
+    dic=response.json()
+
+    for proj in dic:
+        if proj['name'] == 'test_api_project_public' or  proj['name'] == 'test_api_project':
+            url = '{}/{}/{}/{}'.format(base_url, 'projects', proj['id'], 'members')
+            data = None
+            response = requests.post(url, timeout=tout, headers=headers, data={'username':'test1'})
+            print(response.text)
+            assert response.status_code == 200
 
 
 def test_project_member_remove():
-    pytest.skip()
+    url = '{}/{}'.format(base_url, 'projects')
+    data = None
+    response = requests.get(url, timeout=tout, headers=headers)
+    dic=response.json()
 
-
-
+    for proj in dic:
+        if proj['name'] == 'test_api_project_public' or  proj['name'] == 'test_api_project':
+            url = '{}/{}/{}/{}/{}'.format(base_url, 'projects', proj['id'], 'members', 'test1')
+            data = None
+            response = requests.delete(url, timeout=tout, headers=headers)
+            print(response.text)
+            assert response.status_code == 200
 
 """
- work related test cases
+work related test cases
 """
 def test_work_create():
     url = '{}/{}'.format(base_url, 'works')
@@ -175,10 +195,14 @@ def test_work_delete():
     for work in dic:
         if work['project'] == 'test_api_project_public' or  work['project'] == 'test_api_project':
             url = '{}/{}/{}'.format(base_url, 'works', work['id'])
+            print(work['id'])
             data = None
             response = requests.delete(url, timeout=tout, headers=headers)
             print(response.text)
             assert response.status_code == 200
+            time.sleep(10)
+            response = requests.get(url, timeout=tout, headers=headers)
+            assert response.status_code != 200
 
 
 def test_project_delete():
