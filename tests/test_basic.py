@@ -11,9 +11,17 @@ def setup_module(module):
     child.sendline ('superuser')
     child.expect(pexpect.EOF)
     out=child.before
-    exp=re.findall(b"Login success", out)
+    exp=re.findall(b"Login success", out) 
     assert exp==[b'Login success']
+    system("mlsteam data mb bk/cifar10")
+    system("mlsteam data cp -r /workspace/cifar10/* bk/cifar10")
+    system("mlsteam data ls bk/cifar10")
 
+def teardown_module(module):
+    """ teardown any state that was previously setup with a setup_module
+    method.
+    """
+    system("mlsteam data rb bk/cifar10")
 
 def test_data_mb():
     ret=system("mlsteam data mb test")
@@ -37,12 +45,6 @@ def test_data_rm():
 def test_data_rb():
     ret=system("mlsteam data rb test")
     assert ret==0
-
-def test_generate_cifar10():
-    system("mlsteam data mb bk/cifar10")
-    system("mlsteam data cp -r /workspace/cifar10/* bk/cifar10")
-    system("mlsteam data ls bk/cifar10")
-
 
 def test_project_create():
     ret=system("mlsteam project create test_project cifar10")
@@ -93,7 +95,3 @@ def test_project_delete():
     print(proj_id)
     ret=system("mlsteam project delete --id "+proj_id)
     assert ret==0
-
-
-def test_cifar10_delete():
-    system("mlsteam data rb cifar10")
