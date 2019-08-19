@@ -11,9 +11,17 @@ def setup_module(module):
     child.sendline ('superuser')
     child.expect(pexpect.EOF)
     out=child.before
-    exp=re.findall(b"Login success", out)
+    exp=re.findall(b"Login success", out) 
     assert exp==[b'Login success']
+    system("mlsteam data mb bk/cifar10")
+    system("mlsteam data cp -r /workspace/cifar10/* bk/cifar10")
+    system("mlsteam data ls bk/cifar10")
 
+def teardown_module(module):
+    """ teardown any state that was previously setup with a setup_module
+    method.
+    """
+    system("mlsteam data rb bk/cifar10")
 
 def test_data_mb():
     ret=system("mlsteam data mb test")
@@ -38,15 +46,9 @@ def test_data_rb():
     ret=system("mlsteam data rb test")
     assert ret==0
 
-def test_generate_cifar10():
-    system("mlsteam data mb bk/cifar10")
-    system("mlsteam data cp -r /workspace/cifar10/* bk/cifar10")
-    system("mlsteam data ls bk/cifar10")
-
-
 def test_project_create():
-    system("mlsteam project create test_project cifar10")
-
+    ret=system("mlsteam project create test_project cifar10")
+    assert ret==0
 
 def test_job_submit():
     ret=system("PROJECT=test_project mlsteam job submit training --job-name job1 --package-path /workspace/example/cifar10_estimator -- python2 cifar10_main.py --data-dir /dataset --job-dir /jobs --train-steps=100")
@@ -71,7 +73,7 @@ def test_job_status():
         job_status=job_status.rstrip()
         print(job_status)
         if job_status == "Running" or job_status == "Waiting" or job_status == "Initializing":
-            time.sleep(60)
+            time.sleep(10)
         elif job_status == "Error" or job_status == "Stopped":
             raise Exception('Job status: '+job_status)
         elif job_status != "Done":
@@ -93,7 +95,3 @@ def test_project_delete():
     print(proj_id)
     ret=system("mlsteam project delete --id "+proj_id)
     assert ret==0
-
-
-def test_cifar10_delete():
-    system("mlsteam data rb cifar10")
