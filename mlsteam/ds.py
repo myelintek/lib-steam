@@ -4,6 +4,11 @@ import click
 from subprocess import check_output, STDOUT
 from .api import MyelindlApi, MyelindlApiError
 
+def os_system_enable_raise(cmd):
+    ret = os.system(cmd)
+#    click.echo(click.style("System call return {}".format(ret), fg='green'))
+    if ret != 0:
+        raise Exception
 
 ## Buckets ##
 @click.command(name="mb")
@@ -73,7 +78,7 @@ def cat(source):
     try:
         args = [a for a in source]
         objs = " ".join(args)
-        os.system("mc cat {}".format(objs))
+        os_system_enable_raise("mc cat {}".format(objs))
     except Exception as e:
         click.echo(click.style("cat object failed. {}".format(e), fg='red'))
         raise 
@@ -87,7 +92,7 @@ def head(lines, source):
     try:
         args = [a for a in source]
         objs = " ".join(args)
-        os.system("mc head -n {} {}".format(lines, objs))
+        os_system_enable_raise("mc head -n {} {}".format(lines, objs))
     except Exception as e:
         click.echo(click.style("cat object failed. {}".format(e), fg='red'))
         raise 
@@ -104,9 +109,9 @@ def cp(recursive, source, target):
         args = [a for a in source]
         objs = " ".join(args)
         if recursive:
-            os.system("mc cp --recursive {} {}".format(objs, target))
+            os_system_enable_raise("mc cp --recursive {} {}".format(objs, target))
         else:
-            os.system("mc cp {} {}".format(objs, target))
+            os_system_enable_raise("mc cp {} {}".format(objs, target))
     except Exception as e:
         click.echo(click.style("copy failed. {}".format(e), fg='red'))
         raise 
@@ -121,9 +126,9 @@ def rm(recursive, target):
         args = [a for a in target]
         objs = " ".join(args)
         if recursive:
-            os.system("mc rm --recursive --force {} ".format(objs))
+            os_system_enable_raise("mc rm --recursive --force {} ".format(objs))
         else:
-            os.system("mc rm {}".format(objs))
+            os_system_enable_raise("mc rm {}".format(objs))
     except Exception as e:
         click.echo(click.style("remove failed. {}".format(e), fg='red'))
         raise 
@@ -143,7 +148,7 @@ def mirror(overwrite, remove, source, target):
         if remove:
             cmd += "--remove "
         cmd += "{} {}".format(source, target)
-        os.system(cmd)
+        os_system_enable_raise(cmd)
     except Exception as e:
         click.echo(click.style("mirror failed. {}".format(e), fg='red'))
         raise 
