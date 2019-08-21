@@ -4,9 +4,10 @@ import os
 import time
 from os import system
 
+from .config import API_SERVER_ADDRESS, DATA_PORT
 
 def setup_module(module):
-    child = pexpect.spawn('mlsteam login --address 140.96.29.151 --username superuser')
+    child = pexpect.spawn('mlsteam login --address {} --username superuser --data-port {}'.format(API_SERVER_ADDRESS, DATA_PORT))
     child.expect ('password:')
     child.sendline ('superuser')
     child.expect(pexpect.EOF)

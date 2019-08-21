@@ -1,20 +1,23 @@
-import requests
-import pexpect
-import pytest
 import json
 import os
 import re
 import time
 from os import system
 
+import requests
+import pexpect
+import pytest
+
+from .config import API_BASE_URL, API_SERVER_ADDRESS, DATA_PORT
+
 headers={}
-base_url='http://140.96.29.151/api'
+base_url=API_BASE_URL
 tout=100
 
 
 def setup_module(module):
     """ setup any state specific to the execution of the given module."""
-    child = pexpect.spawn('mlsteam login --address 140.96.29.151 --username superuser')
+    child = pexpect.spawn('mlsteam login --address {} --username superuser --data-port {}'.format(API_SERVER_ADDRESS, DATA_PORT))
     child.expect ('password:')
     child.sendline ('superuser')
     child.expect(pexpect.EOF)
