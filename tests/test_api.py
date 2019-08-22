@@ -196,16 +196,17 @@ def test_work_delete():
     dic=response.json()
 
     for work in dic:
-        if work['project'] == 'test_api_project_public' or  work['project'] == 'test_api_project':
+        if work['project']['name'] == 'test_api_project_public' or  work['project']['name'] == 'test_api_project':
+            time.sleep(10)
             url = '{}/{}/{}'.format(base_url, 'works', work['id'])
             print(work['id'])
             data = None
             response = requests.delete(url, timeout=tout, headers=headers)
             print(response.text)
             assert response.status_code == 200
-            time.sleep(10)
+            time.sleep(30)
             response = requests.get(url, timeout=tout, headers=headers)
-            assert response.status_code != 200
+            assert response.text == '{}\n'
 
 
 def test_project_delete():
