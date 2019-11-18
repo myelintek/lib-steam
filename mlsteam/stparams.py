@@ -3,22 +3,28 @@ import yaml
 import logging
 
 
-## get value from JOB_DIR/param.yml
+## get value from HOME/lab/mlsteam.yml
 def get_value(key, default=None):
-    _dir = os.getenv('JOB_DIR', None)
+    _dir = os.getenv('HOME', None)
     if not _dir:
-        logging.warning("use default value for {}, JOB_DIR environment variable undefined.".format(key))
+        logging.warning("use default value for {}, HOME environment variable undefined.".format(key))
         return default
-    param_file = os.path.join(_dir, "param.yml")
+    param_file = os.path.join(_dir, "lab", "mlsteam.yml")
     if not os.path.exists(param_file):
-        logging.warning("use default value for {}, param.yml not found.".format(key))
+        logging.warning("use default value for {}, mlsteam.yml not found.".format(key))
         return default
     params = {}
     with open(param_file, 'r') as f:
         params = yaml.safe_load(f)
-    for k, v in params.iteritems():
+    if "params" not in mlsteam:
+        logging.warning("use default value for {}, undefined variable.".format(key))
+        return default
+    for k, v in params["params"].iteritems():
         if key == k:
+            if type(params["params"][key]) == list:
+                logging.warning("key {} is a list, use first value".format(key))
+                return params["params"][key][0]
             logging.info("use {}: {}".format(k, v))
-            return params[key]
+            return params["params"][key]
     logging.warning("use default value for {}, undefined variable.".format(key))
     return default
