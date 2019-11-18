@@ -16,7 +16,7 @@ def get_value(key, default=None):
     params = {}
     with open(param_file, 'r') as f:
         params = yaml.safe_load(f)
-    if "params" not in mlsteam:
+    if "params" not in params:
         logging.warning("use default value for {}, undefined variable.".format(key))
         return default
     for k, v in params["params"].iteritems():
