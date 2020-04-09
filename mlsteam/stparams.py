@@ -21,10 +21,17 @@ def get_value(key, default=None):
         return default
 
     if key in params['params']:
-        if isinstance(params['params'][key]['values'], list):
-            logging.warning("key {} is a list, use first value {}".format(key, params['params'][key]['values'][0]))
-            return params['params'][key]['values'][0]
-        logging.info("use {}: {}".format(key, params['params'][key]['values']))
-        return params['params'][key]['values']
-    logging.warning("use default value for {}, undefined variable.".format(key))
+        values = None
+        if isinstance(params['params'][key], dict):
+            values = params['params'][key]['values']
+        else:
+            values = params['params'][key]
+
+        if isinstance(values, list):
+            logging.warning("key {} is a list, use first value {}".format(key, values[0]))
+            return values[0]
+        logging.info("use {}: {}".format(key, values))
+        return values
+
+        logging.warning("use default value for {}, undefined variable.".format(key))
     return default
