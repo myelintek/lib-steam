@@ -19,12 +19,19 @@ def get_value(key, default=None):
     if "params" not in params:
         logging.warning("use default value for {}, undefined variable.".format(key))
         return default
-    for k, v in params["params"].iteritems():
-        if key == k:
-            if type(params["params"][key]) == list:
-                logging.warning("key {} is a list, use first value".format(key))
-                return params["params"][key][0]
-            logging.info("use {}: {}".format(k, v))
-            return params["params"][key]
-    logging.warning("use default value for {}, undefined variable.".format(key))
+
+    if key in params['params']:
+        values = None
+        if isinstance(params['params'][key], dict):
+            values = params['params'][key]['values']
+        else:
+            values = params['params'][key]
+
+        if isinstance(values, list):
+            logging.warning("key {} is a list, use first value {}".format(key, values[0]))
+            return values[0]
+        logging.info("use {}: {}".format(key, values))
+        return values
+
+        logging.warning("use default value for {}, undefined variable.".format(key))
     return default
