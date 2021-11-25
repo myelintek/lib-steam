@@ -1,38 +1,37 @@
 import json
 import click
-from datetime import datetime
-from api import MyelindlApi, MyelindlApiError
+from .api import MyelindlApi, MyelindlApiError
 
 @click.command()
 @click.argument('id', required=True)
-def create(id):
+def create(_id):
     try:
         api = MyelindlApi()
-        result = api.service_create(id)
+        result = api.service_create(_id)
         click.echo(result)
-    except MyelindlApiError, e:
+    except MyelindlApiError as e:
         click.echo("create service failed, {}".format(e))
         raise
 
 
-@click.command()
-def list():
+@click.command('list')
+def do_list():
     try:
         api = MyelindlApi()
         result = api.service_list()
         click.echo(json.dumps(result, indent=2, sort_keys=True))
-    except MyelindlApiError, e:
+    except MyelindlApiError as e:
         click.echo("list service failed, {}".format(e))
         raise
 
 
 @click.command()
 @click.argument('id', required=True)
-def delete(id):
+def delete(_id):
     try:
         api = MyelindlApi()
-        result = api.service_delete(id)
-    except MyelindlApiError, e:
+        api.service_delete(_id)
+    except MyelindlApiError as e:
         click.echo("delete a service failed, {}".format(e))
         raise
 
@@ -43,5 +42,5 @@ def service():
 
 
 service.add_command(create)
-service.add_command(list)
+service.add_command(do_list)
 service.add_command(delete)

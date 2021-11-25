@@ -1,8 +1,8 @@
 import os
 import click
-
-from api import MyelindlApi, MyelindlApiError
 from mlsteam import version
+from .api import MyelindlApi, MyelindlApiError
+
 
 @click.command()
 @click.option('--address', required=True, help="server address")
@@ -26,6 +26,5 @@ def login(address, username, data_port):
         if server_ver['data'] != version.__sha__:
             click.echo(click.style("Warning, mlsteam client and server mismatch, please upgrade mlsteam.", fg='yellow'))
     except MyelindlApiError as e:
-        click.echo(u'Fail due to {}'.format(e))
+        click.echo('Fail due to {}'.format(e))
         raise
-

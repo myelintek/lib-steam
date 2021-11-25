@@ -1,6 +1,5 @@
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 try:
-    import sha
-    __sha__ = sha.__sha__
-except:
+    from .sha import __sha__
+except Exception:
     __sha__ = '0'

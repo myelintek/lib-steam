@@ -22,5 +22,5 @@ def write(metrics):
     if log_file:
         t0=time.time()
         chunk="{}, {}\n".format(t0, _metrics)
-        with open(log_file, "a") as f:
+        with open(log_file, encoding="utf-8", mode="a") as f:
             f.write(chunk)

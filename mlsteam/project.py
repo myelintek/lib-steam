@@ -1,7 +1,8 @@
 import json
-import click
 from datetime import datetime
-from api import MyelindlApi, MyelindlApiError
+import click
+from .api import MyelindlApi, MyelindlApiError
+
 
 @click.command()
 @click.argument('name', required=True)
@@ -15,14 +16,14 @@ def create(name, dataset):
         result = api.project_create(name, dataset)
 
         click.echo('{}'.format(result['id']))
-    except MyelindlApiError, e:
+    except MyelindlApiError as e:
         click.echo("new project failed, {}".format(e))
         raise
 
 
-@click.command()
+@click.command('list')
 @click.option('--json', 'is_json', default=False, help="return json format output")
-def list(is_json):
+def do_list(is_json):
     try:
         api = MyelindlApi()
         result = api.project_list()
@@ -39,35 +40,35 @@ def list(is_json):
         click.echo('=' * len(header))
         click.echo(header)
         click.echo('=' * len(header))
-        for project in result:
-            line = template.format(project['id'],
-                                   project['name'],
-                                   project['username'],
-                                   datetime.fromtimestamp(project['create_time']).strftime("%Y %b %d, %H:%M:%S"))
+        for proj in result:
+            line = template.format(proj['id'],
+                                   proj['name'],
+                                   proj['username'],
+                                   datetime.fromtimestamp(proj['create_time']).strftime("%Y %b %d, %H:%M:%S"))
             click.echo(line)
         click.echo('=' * len(header))
-    except MyelindlApiError, e:
+    except MyelindlApiError as e:
         click.echo("list project failed, {}".format(e))
         raise
 
 
 @click.command()
 @click.option('--id', required=True, help="id of the project")
-def delete(id):
+def delete(_id):
     try:
         api = MyelindlApi()
-        result = api.project_delete(id)
-    except MyelindlApiError, e:
+        api.project_delete(_id)
+    except MyelindlApiError as e:
         click.echo("delete a project failed, {}".format(e))
         raise
 
 
 @click.command()
 @click.option('id', '--id', required=True, help='id')
-def info(id):
+def info(_id):
     try:
         api = MyelindlApi()
-        result=api.project_get_info(id)
+        result=api.project_get_info(_id)
 
         template = '| {:>11} | {:>40}|'
         header = template.format('Field', 'Value')
@@ -79,7 +80,7 @@ def info(id):
             line = template.format(k, v)
             click.echo(line)
         click.echo('='* len(header))
-    except MyelindlApiError, e:
+    except MyelindlApiError as e:
         click.echo("show project info failed, {}".format(e))
         raise
 
@@ -90,6 +91,6 @@ def project():
 
 
 project.add_command(create)
-project.add_command(list)
+project.add_command(do_list)
 project.add_command(delete)
 project.add_command(info)

@@ -1,10 +1,9 @@
 import os
-import click
 import json
-import time
 import subprocess
 from datetime import datetime
-from api import MyelindlApi, MyelindlApiError
+import click
+from mlsteam.api import MyelindlApi, MyelindlApiError
 
 
 @click.command()
@@ -15,7 +14,6 @@ from api import MyelindlApi, MyelindlApiError
 @click.option('--num-gpu', type=click.INT, default=1, help='number of GPU (default: 1)')
 @click.argument('user-args', nargs=-1, type=click.Path())
 def training(job_name, package_path, image_tag, parameters, num_gpu, user_args):
-    dst_path = ''
     job_id = None
     project = os.getenv('PROJECT', None)
     if project is None:
@@ -30,13 +28,11 @@ def training(job_name, package_path, image_tag, parameters, num_gpu, user_args):
     if parameters:
         if not os.path.exists(parameters):
             click.echo('parameter file: {} not exists'.format(parameters))
-        with open(parameters, 'r') as pfile:
+        with open(parameters, encoding='utf-8') as pfile:
             parameters = pfile.read()
     try:
         api = MyelindlApi()
         args = [a for a in user_args]
-        remote_path = None
-        remote_real_path = None
         result = api.job_create(
             project=project,
             image_tag=image_tag,
@@ -64,9 +60,9 @@ def training(job_name, package_path, image_tag, parameters, num_gpu, user_args):
         raise
 
 
-@click.command()
+@click.command('list')
 @click.option('--json', 'is_json', default=False, help="return json format output")
-def list(is_json):
+def do_list(is_json):
     try:
         api = MyelindlApi()
         result = api.job_list()
@@ -92,7 +88,7 @@ def list(is_json):
                                    inst['username'])
             click.echo(line)
         click.echo('=' * len(header))
-    except Exception, e:
+    except Exception as e:
         click.echo("submit failed, {}".format(e))
         raise
 
@@ -103,7 +99,7 @@ def log(job_id):
     try:
         api = MyelindlApi()
         click.echo(api.job_log(job_id))
-    except MyelindlApiError, e:
+    except MyelindlApiError as e:
         click.echo("failed, {}".format(e))
         raise
 
@@ -114,8 +110,8 @@ def delete(job_id):
     try:
         api = MyelindlApi()
         result = api.job_delete(job_id)
-        click.echo('Job {} deleted '.format(job_id))
-    except Exception, e:
+        click.echo('Job {} deleted, {}'.format(job_id, result))
+    except Exception as e:
         click.echo("failed, {}".format(e))
         raise
 
@@ -125,9 +121,9 @@ def delete(job_id):
 def abort(job_id):
     try:
         api = MyelindlApi()
-        result = api.job_abort(job_id)
+        api.job_abort(job_id)
         click.echo('Job {} aborted '.format(job_id))
-    except Exception, e:
+    except Exception as e:
         click.echo("failed, {}".format(e))
         raise
 
@@ -138,7 +134,7 @@ def download(job_id):
     try:
         api = MyelindlApi()
         api.job_download(job_id)
-    except Exception, e:
+    except Exception as e:
         click.echo("failed, {}".format(e))
         raise
 
@@ -157,7 +153,7 @@ def job():
 
 
 job.add_command(submit)
-job.add_command(list)
+job.add_command(do_list)
 job.add_command(log)
 job.add_command(delete)
 job.add_command(abort)

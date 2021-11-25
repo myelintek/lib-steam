@@ -1,8 +1,8 @@
 import os
 import re
+from subprocess import check_output
 import click
-from subprocess import check_output, STDOUT
-from .api import MyelindlApi, MyelindlApiError
+from .api import MyelindlApi
 
 def os_system_enable_raise(cmd):
     ret = os.system(cmd)
@@ -26,7 +26,7 @@ def mk_bk(name):
         api.bucket_add(bk_name)
     except Exception as e:
         click.echo(click.style("Bucket created failed. {}".format(e), fg='red'))
-        raise 
+        raise
     click.echo(click.style("Bucket `{}` created successfully.".format(name), fg='green'))
 
 
@@ -42,9 +42,9 @@ def rm_bk(name):
         api.bucket_del(bk_name)
     except Exception as e:
         click.echo(click.style("Bucket delete failed. {}".format(e), fg='red'))
-        raise 
+        raise
     click.echo(click.style("Bucket `{}` deleted successfully.".format(name), fg='green'))
- 
+
 
 ## Objects ##
 @click.command()
@@ -59,7 +59,7 @@ def ls(target):
             out = bytes.decode(out_b)
             for line in out.splitlines():
                 if 'run-' not in line:
-                    match = re.search('(\[.*\])\s+([^\s]+B) (.*)', line)
+                    match = re.search(r"(\[.*\])\s+([^\s]+B) (.*)", line)
                     if match:
                         click.echo(click.style(match.group(1), fg='green')+'\t'+
                                    click.style(match.group(2), fg='yellow')+' '+
@@ -68,7 +68,7 @@ def ls(target):
             click.echo(click.style("Are you want to list bucket? try `steam data ls bk/`", fg='green'))
     except Exception as e:
         click.echo(click.style("ls failed. {}".format(e), fg='red'))
-        raise 
+        raise
 
 
 @click.command()
@@ -81,7 +81,7 @@ def cat(source):
         os_system_enable_raise("mc cat {}".format(objs))
     except Exception as e:
         click.echo(click.style("cat object failed. {}".format(e), fg='red'))
-        raise 
+        raise
 
 
 @click.command()
@@ -95,7 +95,7 @@ def head(lines, source):
         os_system_enable_raise("mc head -n {} {}".format(lines, objs))
     except Exception as e:
         click.echo(click.style("cat object failed. {}".format(e), fg='red'))
-        raise 
+        raise
 
 
 @click.command()
@@ -105,7 +105,6 @@ def head(lines, source):
 def cp(recursive, source, target):
     """copy objects"""
     try:
-        out = None
         args = [a for a in source]
         objs = " ".join(args)
         if recursive:
@@ -114,7 +113,7 @@ def cp(recursive, source, target):
             os_system_enable_raise("mc cp {} {}".format(objs, target))
     except Exception as e:
         click.echo(click.style("copy failed. {}".format(e), fg='red'))
-        raise 
+        raise
 
 
 @click.command()
@@ -131,7 +130,7 @@ def rm(recursive, target):
             os_system_enable_raise("mc rm {}".format(objs))
     except Exception as e:
         click.echo(click.style("remove failed. {}".format(e), fg='red'))
-        raise 
+        raise
 
 
 @click.command()
@@ -151,7 +150,7 @@ def mirror(overwrite, remove, source, target):
         os_system_enable_raise(cmd)
     except Exception as e:
         click.echo(click.style("mirror failed. {}".format(e), fg='red'))
-        raise 
+        raise
 
 
 @click.group(help='Groups of commands to manage datasets')
