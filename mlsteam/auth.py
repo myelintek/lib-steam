@@ -23,8 +23,7 @@ def login(address, username, data_port):
 
         click.echo('Login success')
         server_ver = api.version()
-        if server_ver['data'] != version.__sha__:
-            click.echo(click.style("Warning, mlsteam client and server mismatch, please upgrade mlsteam.", fg='yellow'))
+        click.echo("Server version: {}".format(server_ver))
     except MyelindlApiError as e:
         click.echo('Fail due to {}'.format(e))
         raise

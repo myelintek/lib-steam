@@ -8,7 +8,7 @@ def info():
     try:
         api = MyelindlApi()
         server_ver = api.version()
-        click.echo("Version: {}, sha: {}".format(version.__version__, version.__sha__))
+        click.echo("Version: {}".format(version.__version__))
         click.echo("Server: {}".format(api.host))
         click.echo("Server Version: {}".format(server_ver))
         click.echo("Username: {}".format(api.username))
