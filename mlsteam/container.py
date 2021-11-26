@@ -54,7 +54,7 @@ def pull(tag):
 def image():
     pass
 
-image.add_command(list)
+image.add_command(do_list)
 image.add_command(delete)
 image.add_command(pull)
 
