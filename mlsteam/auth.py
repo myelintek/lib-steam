@@ -1,6 +1,5 @@
 import os
 import click
-from mlsteam import version
 from .api import MyelindlApi, MyelindlApiError
 
 
