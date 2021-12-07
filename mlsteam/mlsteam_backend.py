@@ -43,8 +43,16 @@ class TrackBackend():
         if self._consumer._is_running:
             self._consumer.disable_sleep()
             self._consumer.wake_up()
+            self._wait_queu_empty(self._cache)
             self._consumer.interrupt()
         self._consumer.join()
+
+    def _wait_queu_empty(self, cache: "DiskCache"):
+        while True:
+            qsize = cache._queue.qsize()
+            if qsize == 0:
+                break
+            time.sleep(1)
 
 
 class ConsumerThread(threading.Thread):
