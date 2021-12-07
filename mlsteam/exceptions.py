@@ -27,3 +27,11 @@ class MLSteamMissingProjectNameException(MLSteamException):
         super().__init__(
             message.format(env_project_name=envs.PROJECT_ENV)
         )
+
+
+class MLSteamInvalidProjectNameException(MLSteamException):
+    def __init__(self):
+        message = "Project name {env_project_name} is invalid"
+        super().__init__(
+            message.format(env_project_name=envs.PROJECT_ENV)
+        )

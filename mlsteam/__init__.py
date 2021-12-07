@@ -5,10 +5,9 @@ import threading
 from mlsteam.api import MyelindlApi
 from mlsteam.mlsteam_backend import ApiClient
 from mlsteam import envs
-from mlsteam.run import Run
+from mlsteam.track import Track
 from mlsteam.mlsteam_backend import (
-    RunBackend,
-    DiskCache,
+    TrackBackend,
 )
 from mlsteam.exceptions import (
     MLSteamMissingApiTokenException,
@@ -20,33 +19,34 @@ from mlsteam.exceptions import (
 def init(project_name=None, api_token=None):
     apiclient = ApiClient(api_token=api_token)
     project_uuid = project_name_lookup(apiclient, project_name)
-    # Run
-    run_id = apiclient.create_run(project_uuid)
+    print(project_uuid)
+    # Track
+    track_id = apiclient.create_track(project_uuid)
 
-    run_lock = threading.RLock()
+    track_lock = threading.RLock()
 
     stdout_path = "monitoring/stdout"
     stderr_path = "monitoring/stderr"
     traceback_path = "monitoring/traceback"
     background_jobs = []
 
-    run_backend = RunBackend(
-        run_id=run_id,
+    track_backend = TrackBackend(
+        track_id=track_id,
+        project_uuid=project_uuid,
         apiclient=apiclient,
-        cache=DiskCache(),
-        lock=run_lock,
+        lock=track_lock,
         background_jobs=background_jobs,
         sleep_time=5
     )
 
-    _run = Run(
-        run_id,
-        run_backend,
-        run_lock,
+    _track = Track(
+        track_id,
+        track_backend,
+        track_lock,
         project_uuid
     )
-    _run.start()
-    return _run
+    _track.start()
+    return _track
 
 
 def project_name_lookup(apiclient, name=None):
