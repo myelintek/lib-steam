@@ -1,7 +1,7 @@
+import atexit
 import threading
-
+import traceback
 from mlsteam.mlsteam_backend import TrackBackend, DiskCache
-from mlsteam.mlsteam_backend import ApiClient
 
 
 class Track(object):
@@ -16,8 +16,12 @@ class Track(object):
         self._lock = track_lock
         self._project_uuid = project_uuid
 
+    def __exit__(self, exc_type, exc_val, exc_tb):
+        if exc_tb is not None:
+            traceback.print_exception(exc_type, exc_val, exc_tb)
+        self.stop()
+
     def __getitem__(self, key):
-        print("getitem, {}".format(key))
         return Config(self, self._backend.cache, key)
 
     def __setitem__(self, key, value):
@@ -27,11 +31,15 @@ class Track(object):
         return self._lock
 
     def start(self):
+        atexit.register(self._shutdown_hook)
         self._backend.start()
-        # TODO start background jobs
 
     def stop(self):
         self._backend.stop()
+
+    def _shutdown_hook(self):
+        self.stop()
+
 
 class Config(object):
     def __init__(self, track: Track, cache: DiskCache, key: str):
@@ -40,15 +48,12 @@ class Config(object):
         self._key = key
 
     def __setitem__(self, key, value):
-        print("Config setitem, {}: {}".format(key, value))
         self[key].assign(value)
 
     def assign(self, value):
-        print("Config assign, {}: {}".format(self._key, value))
         with self._track.lock():
             self._cache.assign(self._key, value)
 
     def log(self, value):
-        print("Config log, {}: {}".format(self._key, value))
         with self._track.lock():
             self._cache.log(self._key, value)
