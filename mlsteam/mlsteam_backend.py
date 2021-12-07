@@ -7,7 +7,7 @@ from mlsteam.version import __version__
 from mlsteam.exceptions import MLSteamInvalidProjectNameException
 import json
 from pathlib import Path
-from time import time
+import time
 import threading
 import queue
 ROOT_PATH = ".mlsteam"
@@ -132,7 +132,7 @@ class DiskCache(object):
         print("Put queue (assign), len: {}".format(self._queue.qsize()))
 
     def log(self, key, value):
-        tm = time()
+        tm = time.time()
         op = QueueOp('log', {key: f"{tm}, {value}\n"})
         self._queue.put(op)
         print("Put queue (log), len: {}".format(self._queue.qsize()))
@@ -145,8 +145,10 @@ class DiskCache(object):
             i = i - 1
             op = self._queue.get()
             if op.type == "config":
+                self._write_config(op.content)
                 config_content.update(op.content)
             elif op.type == "log":
+                self._write_log(op.content)
                 for (key, value) in op.content.items():
                     if key in log_content:
                         log_content[key] = log_content[key] + value
@@ -170,7 +172,7 @@ class DiskCache(object):
             key_path = self.track_path.joinpath(f"{key}.log")
             if not key_path.parent.exists():
                 key_path.parent.mkdir(parents=True)
-            tm = time()
+            tm = time.time()
             with key_path.open('a') as f:
                 f.write(f"{tm}, {value}\n")
 
