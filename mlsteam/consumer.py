@@ -5,73 +5,34 @@ from bravado.client import SwaggerClient
 from mlsteam.api_clients.credential import Credential
 from mlsteam.version import __version__
 from mlsteam.exceptions import MLSteamInvalidProjectNameException
-import json
 from pathlib import Path
 from time import time
 from time import sleep
 import threading
 import queue
 ROOT_PATH = ".mlsteam"
-# import json
-
-
-class TrackBackend():
-    def __init__(
-        self,
-        track_id: str,
-        project_uuid: str,
-        apiclient: "ApiClient",
-        # cache: "DiskCache",
-        lock: threading.RLock,
-        background_jobs: list,
-        sleep_time: int,
-    ):
-        self._track_id = track_id
-        self._apiclient = apiclient
-        self._cache = DiskCache(f"{project_uuid}/{track_id}")
-        self._consumer = ConsumerThread(self, project_uuid, track_id, sleep_time)
-        self._waiting_cond = threading.Condition(lock=lock)
-        self._background_jobs = background_jobs
-
-    @property
-    def cache(self):
-        return self._cache
-
-    def start(self):
-        self._consumer.start()
-
-    def stop(self):
-        if self._consumer._is_running:
-            self._consumer.disable_sleep()
-            self._consumer.wake_up()
-            self._wait_queu_empty(self._cache)
-            self._consumer.interrupt()
-        self._consumer.join()
-
-    def _wait_queu_empty(self, cache: "DiskCache"):
-        while True:
-            qsize = cache._queue.qsize()
-            if qsize == 0:
-                break
-            sleep(1)
 
 
 class ConsumerThread(threading.Thread):
     def __init__(self,
-        backend: TrackBackend,
+        lock: threading.RLock,
+        cache: "DiskCache",
+        apiclient: "ApiClient",
         project_uuid: str,
-        track_id: str,
+        track_bucket_name: str,
         sleep_time: int
     ):
         super().__init__(daemon=True)
+        self._lock = lock
         self._sleep_time = sleep_time
         self._interrupted = False
         self._event = threading.Event()
         self._is_running = False
-        self._backend = backend
+        self._cache = cache
+        self._apiclient = apiclient
         self._puuid = project_uuid
-        self._trackid = track_id
-        print(f"Thread, puuid: {project_uuid}, track_id: {track_id}")
+        self._track_bucket_name = track_bucket_name
+        print(f"Thread, puuid: {project_uuid}, bucket_name: {track_bucket_name}")
 
     def disable_sleep(self):
         self._sleep_time = 0
@@ -91,7 +52,9 @@ class ConsumerThread(threading.Thread):
                 self.work()
                 # print("consumer stop")
                 if self._sleep_time > 0 and not self._interrupted:
+                    print("sleep")
                     self._event.wait(timeout=self._sleep_time)
+                    print("wake")
                     self._event.clear()
                     # sleep for self._sleep_time
         finally:
@@ -100,21 +63,10 @@ class ConsumerThread(threading.Thread):
     def work(self):
         # while True:
         try:
-            config_data, log_data = self._backend._cache.process()
-            # process_batch
-            if config_data:
-                print(f"process batch, config: {config_data}")
-                self._backend._apiclient.post_track_config(
-                    self._puuid,
-                    self._trackid,
-                    json.dumps(config_data)
-                )
-            if log_data:
-                print(f"process batch, log: {log_data}")
-                self._backend._apiclient.post_track_log(
-                    self._puuid,
-                    self._trackid,
-                    json.dumps(log_data)
+            with self._lock:
+                self._cache.process(
+                    self._apiclient,
+                    self._track_bucket_name
                 )
         except Exception as e:
             print("error in api thread: {}".format(e))
@@ -128,7 +80,7 @@ class DiskCache(object):
             self.track_path.mkdir(parents=True)
 
     def assign(self, key, value):
-        op = QueueOp('config', {key: value})
+        op = QueueOp('config', {key: f"{value}"})
         self._queue.put(op)
         print("Put queue (assign), len: {}".format(self._queue.qsize()))
 
@@ -138,24 +90,39 @@ class DiskCache(object):
         self._queue.put(op)
         print("Put queue (log), len: {}".format(self._queue.qsize()))
 
-    def process(self):
+    def process(self, apiclient: "ApiClient", bucket_name: str):
         i = 100
-        config_content = {}
-        log_content = {}
+        log_aggregate = {}
         while (not self._queue.empty()) and (i > 0):
             i = i - 1
             op = self._queue.get()
             if op.type == "config":
                 self._write_config(op.content)
-                config_content.update(op.content)
+                for (keypath, value) in op.content.items():
+                    if isinstance(value, str):
+                        value = value.encode('utf-8')
+                    apiclient.put_file(
+                        bucket_name=bucket_name,
+                        obj_path=keypath,
+                        obj=value
+                    )
             elif op.type == "log":
                 self._write_log(op.content)
                 for (key, value) in op.content.items():
-                    if key in log_content:
-                        log_content[key] = log_content[key] + value
+                    if isinstance(value, str):
+                        value = value.encode('utf-8')
+                    if key in log_aggregate:
+                        log_aggregate[key] = log_aggregate[key] + value
                     else:
-                        log_content[key] = value
-        return config_content, log_content
+                        log_aggregate[key] = value
+        if log_aggregate:
+            for (keypath, value) in log_aggregate.items():
+                apiclient.put_file(
+                    bucket_name=bucket_name,
+                    obj_path=keypath,
+                    obj=value,
+                    part_offset='-1'
+                )
 
     def _write_config(self, content):
         for (key, value) in content.items():
@@ -219,12 +186,13 @@ class ApiClient(object):
                 'Authorization': f'Bearer {self.credential.api_token}'
             }
         }
-        # for _api in dir(self.swagger_client.api):
-        #     print('\t' + _api)
+        for tag in dir(self.swagger_client):
+            for _api in dir(getattr(self.swagger_client, tag)):
+                print('\t{}.{}'.format(tag, _api))
 
 
     def get_project(self, name):
-        result = self.swagger_client.api.listProjects(
+        result = self.swagger_client.project.listProject(
             _request_options=self._request_options,
             name=name).result()
         # TBD
@@ -236,30 +204,23 @@ class ApiClient(object):
         raise MLSteamInvalidProjectNameException()
 
     def create_track(self, project_uuid):
-        result = self.swagger_client.api.createTrack(
+        result = self.swagger_client.track.createTrack(
             _request_options=self._request_options,
             puuid=project_uuid).result()
         print(result)
-        # TODO client API
-        return result['id']
+        return result
 
-    def post_track_config(self, project_uuid, track_id, config):
-        result = self.swagger_client.api.postTrackConfig(
+    def put_file(self, bucket_name: str, obj_path: str, obj: bytes, part_offset: int = None):
+        result = self.swagger_client.object.putObject(
             _request_options=self._request_options,
-            puuid=project_uuid,
-            tid=track_id,
-            data=config).result()
+            bucket_name=bucket_name,
+            obj_path=obj_path,
+            obj=obj,
+            part_offset=part_offset,
+            part_size=len(obj)).result()
         print(result)
         return result
 
-    def post_track_log(self, project_uuid, track_id, log):
-        result = self.swagger_client.api.postTrackLog(
-            _request_options=self._request_options,
-            puuid=project_uuid,
-            tid=track_id,
-            data=log).result()
-        print(result)
-        return result
 
 def create_http_client():
     http_client = RequestsClient()
