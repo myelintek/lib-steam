@@ -2,7 +2,6 @@ import atexit
 import threading
 import traceback
 from time import sleep
-from mlsteam import api
 from mlsteam.consumer import ApiClient, DiskCache, ConsumerThread
 
 
@@ -48,7 +47,7 @@ class Track(object):
         self._consumer.start()
 
     def stop(self):
-        if self._consumer._is_running:
+        if self._consumer.is_running():
             self._consumer.disable_sleep()
             self._consumer.wake_up()
             self._wait_queu_empty(self._cache)
@@ -57,7 +56,7 @@ class Track(object):
 
     def _wait_queu_empty(self, cache: "DiskCache"):
         while True:
-            qsize = cache._queue.qsize()
+            qsize = cache.queue_size()
             if qsize == 0:
                 break
             sleep(1)
@@ -73,6 +72,7 @@ class Handler(object):
         self._key = key
 
     def __setitem__(self, key, value):
+        print("Handler type: {}".format(self))
         self[key].assign(value)
 
     def assign(self, value):

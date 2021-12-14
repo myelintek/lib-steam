@@ -20,11 +20,9 @@ def init(project_name=None, api_token=None):
     # Track
     track_obj = apiclient.create_track(project_uuid)
 
-    
-
-    stdout_path = "monitoring/stdout"
-    stderr_path = "monitoring/stderr"
-    traceback_path = "monitoring/traceback"
+    # stdout_path = "monitoring/stdout"
+    # stderr_path = "monitoring/stderr"
+    # traceback_path = "monitoring/traceback"
     background_jobs = []
 
     _track = Track(

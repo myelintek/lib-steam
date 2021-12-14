@@ -1,15 +1,14 @@
 import platform
+import threading
+import queue
+from urllib.parse import urlparse
+from pathlib import Path
+from time import time
 from bravado.requests_client import RequestsClient
-from bravado.requests_client import Authenticator
 from bravado.client import SwaggerClient
 from mlsteam.api_clients.credential import Credential
 from mlsteam.version import __version__
 from mlsteam.exceptions import MLSteamInvalidProjectNameException
-from pathlib import Path
-from time import time
-from time import sleep
-import threading
-import queue
 ROOT_PATH = ".mlsteam"
 
 
@@ -34,6 +33,9 @@ class ConsumerThread(threading.Thread):
         self._track_bucket_name = track_bucket_name
         print(f"Thread, puuid: {project_uuid}, bucket_name: {track_bucket_name}")
 
+    def is_running(self):
+        return self._is_running
+
     def disable_sleep(self):
         self._sleep_time = 0
 
@@ -52,9 +54,9 @@ class ConsumerThread(threading.Thread):
                 self.work()
                 # print("consumer stop")
                 if self._sleep_time > 0 and not self._interrupted:
-                    print("sleep")
+                    # print("sleep")
                     self._event.wait(timeout=self._sleep_time)
-                    print("wake")
+                    # print("wake")
                     self._event.clear()
                     # sleep for self._sleep_time
         finally:
@@ -78,6 +80,9 @@ class DiskCache(object):
         self.track_path = Path(ROOT_PATH, track_path)
         if not self.track_path.exists():
             self.track_path.mkdir(parents=True)
+
+    def queue_size(self):
+        return self._queue.qsize()
 
     def assign(self, key, value):
         op = QueueOp('config', {key: f"{value}"})
@@ -164,9 +169,9 @@ class ApiClient(object):
         self.credential = Credential(api_token)
         self.http_client = create_http_client()
         self.http_client.set_api_key(
-            "http://192.168.0.17:3000",
-            f"Bearer {self.credential.api_token}",
-            param_name="api_key",
+            host=urlparse(self.credential.api_address).netloc,
+            api_key=f"Bearer {self.credential.api_token}",
+            param_name="Authorization",
             param_in="header",
         )
         self.swagger_client = SwaggerClient.from_url(
@@ -181,19 +186,19 @@ class ApiClient(object):
             #     'Authorization': f'Bearer {self.credential.api_token}'
             # }
         )
-        self._request_options = {
-            'headers': {
-                'Authorization': f'Bearer {self.credential.api_token}'
-            }
-        }
-        for tag in dir(self.swagger_client):
-            for _api in dir(getattr(self.swagger_client, tag)):
-                print('\t{}.{}'.format(tag, _api))
+        # self._request_options = {
+        #     'headers': {
+        #         'Authorization': f'Bearer {self.credential.api_token}'
+        #     }
+        # }
+        # for tag in dir(self.swagger_client):
+        #     for _api in dir(getattr(self.swagger_client, tag)):
+        #         print('\t{}.{}'.format(tag, _api))
 
 
     def get_project(self, name):
         result = self.swagger_client.project.listProject(
-            _request_options=self._request_options,
+            # _request_options=self._request_options,
             name=name).result()
         # TBD
         print(result)
@@ -205,14 +210,14 @@ class ApiClient(object):
 
     def create_track(self, project_uuid):
         result = self.swagger_client.track.createTrack(
-            _request_options=self._request_options,
+            # _request_options=self._request_options,
             puuid=project_uuid).result()
         print(result)
         return result
 
     def put_file(self, bucket_name: str, obj_path: str, obj: bytes, part_offset: int = None):
         result = self.swagger_client.object.putObject(
-            _request_options=self._request_options,
+            # _request_options=self._request_options,
             bucket_name=bucket_name,
             obj_path=obj_path,
             obj=obj,
@@ -233,4 +238,3 @@ def create_http_client():
     )
     http_client.session.headers.update({"User-Agent": user_agent})
     return http_client
-
