@@ -71,6 +71,9 @@ class Handler(object):
         self._cache = cache
         self._key = key
 
+    def __getitem__(self, key):
+        return Handler(self._track, self._cache, self._key)
+
     def __setitem__(self, key, value):
         print("Handler type: {}".format(self))
         self[key].assign(value)

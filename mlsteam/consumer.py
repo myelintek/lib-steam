@@ -87,13 +87,11 @@ class DiskCache(object):
     def assign(self, key, value):
         op = QueueOp('config', {key: f"{value}"})
         self._queue.put(op)
-        print("Put queue (assign), len: {}".format(self._queue.qsize()))
 
     def log(self, key, value):
         tm = time()
         op = QueueOp('log', {key: f"{tm}, {value}\n"})
         self._queue.put(op)
-        print("Put queue (log), len: {}".format(self._queue.qsize()))
 
     def process(self, apiclient: "ApiClient", bucket_name: str):
         i = 100
