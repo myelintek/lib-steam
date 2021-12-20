@@ -1,7 +1,6 @@
 import json
 import click
-from datetime import datetime
-from api import MyelindlApi, MyelindlApiError
+from .api import MyelindlApi, MyelindlApiError
 
 @click.command()
 @click.argument('container', required=True)
@@ -14,40 +13,40 @@ def create(container, dataset, num_gpu, port, user_args):
         api = MyelindlApi()
         result = api.work_create(container, dataset, num_gpu, port, user_args)
         click.echo(result)
-    except MyelindlApiError, e:
+    except MyelindlApiError as e:
         click.echo("create work failed, {}".format(e))
         raise
 
 
-@click.command()
-def list():
+@click.command('list')
+def do_list():
     try:
         api = MyelindlApi()
         result = api.work_list()
         click.echo(json.dumps(result, indent=2, sort_keys=True))
-    except MyelindlApiError, e:
+    except MyelindlApiError as e:
         click.echo("list work failed, {}".format(e))
         raise
 
 
 @click.command()
 @click.argument('id', required=True)
-def delete(id):
+def delete(_id):
     try:
         api = MyelindlApi()
-        result = api.work_delete(id)
-    except MyelindlApiError, e:
+        api.work_delete(_id)
+    except MyelindlApiError as e:
         click.echo("delete a work failed, {}".format(e))
         raise
 
 @click.command()
 @click.argument('id', required=True)
-def info(id):
+def info(_id):
     try:
         api = MyelindlApi()
-        result = api.work_info(id)
+        result = api.work_info(_id)
         click.echo(json.dumps(result, indent=2, sort_keys=True))
-    except MyelindlApiError, e:
+    except MyelindlApiError as e:
         click.echo("list work failed, {}".format(e))
         raise
 
@@ -58,6 +57,6 @@ def work():
 
 
 work.add_command(create)
-work.add_command(list)
+work.add_command(do_list)
 work.add_command(delete)
 work.add_command(info)

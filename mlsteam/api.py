@@ -3,11 +3,9 @@ import re
 import time
 from datetime import datetime, timedelta
 import json
-import requests
+import logging
 import getpass
-import traceback
-import shutil
-from requests import HTTPError
+import requests
 
 DATA_TRANSFER_REMOTE=True
 
@@ -17,7 +15,6 @@ CONFIG_PATH = '.mlsteam'
 
 
 class MyelindlApi(object):
-    
     def __init__(self, address=None, username=None, data_port=9000):
         self.base_url = "http://{}/api".format(address) or 'http://localhost/api'
         self.address = address or 'localhost'
@@ -44,7 +41,7 @@ class MyelindlApi(object):
         if not self.address or not self.username:
             raise MyelindlApiError('Wrong input')
 
-        with open(self.cred_file, 'w') as cred:
+        with open(self.cred_file, encoding='utf-8', mode='w') as cred:
             json.dump({
                 'address': self.address,
                 'host': self.host,
@@ -59,13 +56,13 @@ class MyelindlApi(object):
     def load_credential(self):
         if not os.path.exists(self.cred_file):
             raise MyelindlApiError('Login First')
-        
-        with open(self.cred_file,'r') as cred:
+
+        with open(self.cred_file, encoding='utf-8') as cred:
             data = json.load(cred)
 
         if 'address' not in data or 'username' not in data:
             raise MyelindlApiError('Login First')
- 
+
         self.host = data['host']
         self.address = data['address']
         self.host = self.address.split(':')[0]
@@ -76,22 +73,21 @@ class MyelindlApi(object):
         self.data_port = data['data_port']
         self.access_token_acquire_time = float(data['access_token_acquire_time'])
         self.refresh_token_acquire_time = float(data['refresh_token_acquire_time'])
-    
-   
+
     def is_access_token_expired(self):
-       return datetime.now() >  (datetime.fromtimestamp(self.access_token_acquire_time) + timedelta(minutes=30))
-    
+        return datetime.now() > (datetime.fromtimestamp(self.access_token_acquire_time) + timedelta(minutes=30))
+
     def is_refresh_token_expired(self):
-        return datetime.now() >  (datetime.fromtimestamp(self.refresh_token_acquire_time) + timedelta(days=30))
+        return datetime.now() > (datetime.fromtimestamp(self.refresh_token_acquire_time) + timedelta(days=30))
 
     def clear_credential(self):
         if os.path.exists(self.cred_file):
             os.remove(self.cred_file)
-   
+
     def login(self, password):
         self.request_token(password)
         self.save_credential()
- 
+
     def request_token(self, password):
         auth_token = self._request('auth/login',
             method='post',
@@ -143,21 +139,21 @@ class MyelindlApi(object):
             access_token=self.access_token,
         )
 
-    def dataset_publish(self, id, type, name, description, data_dir):
+    def dataset_publish(self, _id, _type, name, description, data_dir):
         return self._request('datasets',
             method='post',
             access_token=self.access_token,
             data={
-                'id': id,
+                'id': _id,
                 'name': name,
-                'type': type,
+                'type': _type,
                 'description': description,
                 'data_dir': data_dir,
             }
         )
 
-    def dataset_unpublish(self, id):
-        return self._request('datasets/{}/publish'.format(id),
+    def dataset_unpublish(self, _id):
+        return self._request('datasets/{}/publish'.format(_id),
             method='delete',
             access_token=self.access_token,
         )
@@ -168,15 +164,15 @@ class MyelindlApi(object):
             access_token=self.access_token,
         )
 
-    def dataset_items(self, id, dir=''):
-        return self._request('datasets/{}/items'.format(id), 
+    def dataset_items(self, _id, _dir=''):
+        return self._request('datasets/{}/items'.format(_id),
             method='get',
             access_token=self.access_token,
-            data={'path': dir}
+            data={'path': _dir}
         )
 
-    def dataset_info(self, id):
-        return self._request('datasets/{}'.format(id),
+    def dataset_info(self, _id):
+        return self._request('datasets/{}'.format(_id),
             method='get',
             access_token=self.access_token,
         )
@@ -185,7 +181,7 @@ class MyelindlApi(object):
     # Model API
     ############################
     def process_model_tag(self, model_tag):
-        
+
         user = self.username
         model = model_tag
         tag = 'latest'
@@ -216,7 +212,7 @@ class MyelindlApi(object):
             data={'offset':offset, 'limit':limit},
         )
 
-    def model_push(self, model_tag, data_dir, description='', type='file'):
+    def model_push(self, model_tag, data_dir, description='', _type='file'):
         model_tag = self.process_model_tag(model_tag)
         return self._request('models/{}'.format(model_tag),
             method='post',
@@ -224,7 +220,7 @@ class MyelindlApi(object):
             data={
                 'model_dir': data_dir,
                 'description': description,
-                'type': type,
+                'type': _type,
             }
         )
 
@@ -272,7 +268,7 @@ class MyelindlApi(object):
             method='delete',
             access_token=self.access_token,
         )
-    
+
     def server_inference(self, server_id , image_file, total):
         with open(image_file,'rb') as f:
             return self._request('servers/{}/inference'.format(server_id),
@@ -302,14 +298,14 @@ class MyelindlApi(object):
                   'user_args': user_args}
         )
 
-    def work_delete(self, id):
-        return self._request('works/{}'.format(id),
+    def work_delete(self, _id):
+        return self._request('works/{}'.format(_id),
             method='delete',
             access_token=self.access_token,
         )
 
-    def work_info(self, id):
-        return self._request('works/{}'.format(id),
+    def work_info(self, _id):
+        return self._request('works/{}'.format(_id),
             method='get',
             access_token=self.access_token,
         )
@@ -323,15 +319,15 @@ class MyelindlApi(object):
             access_token=self.access_token,
         )
 
-    def service_create(self, id):
+    def service_create(self, _id):
         return self._request('services',
             method='post',
             access_token=self.access_token,
-            data={'checkpoint': id}
+            data={'checkpoint': _id}
         )
 
-    def service_delete(self, id):
-        return self._request('services/{}'.format(id),
+    def service_delete(self, _id):
+        return self._request('services/{}'.format(_id),
             method='delete',
             access_token=self.access_token,
         )
@@ -345,20 +341,20 @@ class MyelindlApi(object):
             access_token=self.access_token,
         )
 
-    def checkpoint_download(self, id):
-        return self._request('checkpoints/{}/download'.format(id),
+    def checkpoint_download(self, _id):
+        return self._request('checkpoints/{}/download'.format(_id),
             method='get',
             access_token=self.access_token,
         )
 
-    def checkpoint_delete(self, id):
-        self._request('checkpoints/{}'.format(id),
+    def checkpoint_delete(self, _id):
+        self._request('checkpoints/{}'.format(_id),
             method='delete',
             access_token=self.access_token,
         )
 
-    def checkpoint_info(self, id):
-        return self._request('checkpoints/{}'.format(id),
+    def checkpoint_info(self, _id):
+        return self._request('checkpoints/{}'.format(_id),
             method='get',
             access_token=self.access_token,
         )
@@ -396,7 +392,7 @@ class MyelindlApi(object):
     ###########################
     def job_create(self, project, image_tag, job_name,
                    pkg_path, parameters, num_gpu, user_args):
-        return self._request('jobs', 
+        return self._request('jobs',
             method='post',
             access_token=self.access_token,
             data={'username': self.username,
@@ -434,28 +430,28 @@ class MyelindlApi(object):
             method='get',
             access_token=self.access_token,
         )
-    
-    def job_log(self, id):
-        return self._request('jobs/{}/log'.format(id),
+
+    def job_log(self, _id):
+        return self._request('jobs/{}/log'.format(_id),
             method='get',
             output_format='plain',
             access_token=self.access_token,
         )
 
-    def job_delete(self, id):
-        return self._request('jobs/{}'.format(id),
+    def job_delete(self, _id):
+        return self._request('jobs/{}'.format(_id),
             method='delete',
             access_token=self.access_token,
         )
 
-    def job_abort(self, id):
-        return self._request('jobs/{}/abort'.format(id),
+    def job_abort(self, _id):
+        return self._request('jobs/{}/abort'.format(_id),
             method='POST',
             access_token=self.access_token,
         )
 
-    def job_download(self, id):
-        return self._request('jobs/{}/download'.format(id),
+    def job_download(self, _id):
+        return self._request('jobs/{}/download'.format(_id),
             method='get',
             access_token=self.access_token,
             output_format='file',
@@ -470,14 +466,14 @@ class MyelindlApi(object):
             access_token=self.access_token,
         )
 
-    def image_delete(self, id):
-        return self._request('images/{}'.format(id),
+    def image_delete(self, _id):
+        return self._request('images/{}'.format(_id),
             method='delete',
             access_token=self.access_token,
         )
 
     def image_pull(self, tag):
-        return self._request('images'.format(id),
+        return self._request('images',
             method='post',
             access_token=self.access_token,
             data={'tag': tag}
@@ -486,30 +482,31 @@ class MyelindlApi(object):
     ###########################
     # Utils
     ############################
-    def _request(self, path, 
-            method='get', 
-            data=None, 
+    def _request(self, path,
+            method='get',
+            data=None,
             files=None,
             output_format='json',
             output_file_dir='',
             timeout=DEFAULT_TIMEOUT_S,
             access_token=None,
-            headers={},
+            headers=None,
             check_token_expire=True,
         ):
-
+        if headers is None:
+            headers = {}
         url = '{0}/{1}'.format(self.base_url, path)
-        func = getattr(requests, method) 
+        func = getattr(requests, method)
         if access_token:
             if self.is_access_token_expired() and check_token_expire:
-                print 'token expire renew token'
+                logging.warning("token expire renew token")
                 self.renew_token()
                 self.save_credential()
                 access_token = self.access_token
             headers.update({
                 'Authorization': 'Bearer {}'.format(access_token)
             })
-        
+
         response = func(
             url,
             data=data,
@@ -518,16 +515,16 @@ class MyelindlApi(object):
             timeout=timeout,
             headers=headers,
         )
-        self._handle_error_msg(response, output_format) 
+        self._handle_error_msg(response, output_format)
 
         return self._process_output(response, output_format, output_file_dir)
 
-    def _handle_error_msg(self, response, format):
+    def _handle_error_msg(self, response, form):
         try:
             response.raise_for_status()
         except Exception as e :
             err_msg = ''
-            if format == 'json':
+            if form == 'json':
                 try:
                     result = json.loads(response.text)
                     if 'error' in result and result['error']:
@@ -535,29 +532,29 @@ class MyelindlApi(object):
                     elif 'msg' in result and result['msg']:
                         err_msg = result['msg']
                 except ValueError:
-                    err_msg = u'{}, output: {}'.format(str(e), response.text)
+                    err_msg = f'{e}, output: {response.text}'
             else:
-                er_msg = str(e)
-            raise MyelindlApiError({'error': u'{}:{}'.format(response.status_code, err_msg)})
-       
-    def _process_output(self, response, format, output_file_dir=''):
+                err_msg = str(e)
+            raise MyelindlApiError({'error': f"{response.status_code}:{err_msg}"})
+
+    def _process_output(self, response, form, output_file_dir=''):
         result = None
-        if format == 'json':
+        if form == 'json':
             try:
                 result = json.loads(response.text)
                 if 'error' in result and result['error']:
                     raise MyelindlApiError(result)
-            except ValueError as e:
+            except ValueError:
                 raise MyelindlApiError({
-                    'error': u'API return value format error. output: {}'.format(response.text)
+                    'error': f"API return value format error. output: {response.text}"
                 })
-        elif format == 'plan':
+        elif form == 'plan':
             result = response.text
-        elif format == 'file':
+        elif form == 'file':
             d = response.headers['content-disposition']
             fname = re.findall("filename=(.+)", d)[0]
             fname = os.path.join(output_file_dir, fname)
-            if output_file_dir != '' and not os.path.exists(outptu_file_dir):
+            if output_file_dir != '' and not os.path.exists(output_file_dir):
                 os.makedirs(output_file_dir)
             with open(fname, 'wb') as f:
                 for chunk in response.iter_content(chunk_size=8192):
@@ -565,7 +562,7 @@ class MyelindlApi(object):
                         f.write(chunk)
         else:
             raise MyelindlApiError({
-                'error': u'Output format not supported {}'.format(format)
+                'error': f"Output format not supported {form}"
             })
 
         return result
@@ -579,4 +576,3 @@ class MyelindlApiError(Exception):
         else:
             self.message = result
         Exception.__init__(self, self.message)
-

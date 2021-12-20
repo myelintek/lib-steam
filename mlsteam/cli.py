@@ -1,31 +1,27 @@
-""" CLI
-"""
-
-import click
 import signal
 import sys
+import logging
+import click
+from . import version
+from .model import model
+from .job import job
+from .project import project
+from .auth import login
+from .container import container
+from .ds import data
+from .checkpoint import checkpoint
+from .service import service
+from .work import work
+from .info import info
+
 
 def sigint_handler(signum, frame):
+    logging.debug("signal {}, {}".format(signum, frame))
     click.echo()
     sys.exit()
 
+
 signal.signal(signal.SIGINT, sigint_handler)
-
-
-#from myelindl.core.model import model
-import version
-from model import model
-from dataset import dataset
-from job import job
-from project import project
-from auth import login
-from container import container
-from ds import data
-from checkpoint import checkpoint
-from service import service
-from work import work
-from info import info
-
 CONTEXT_SETTINGS = dict(help_option_names=['-h', '--help'])
 
 

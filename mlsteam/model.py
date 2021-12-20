@@ -1,13 +1,14 @@
 import os
 import uuid
+import logging
 import click
-from api import MyelindlApi, MyelindlApiError
-from utils import sizeof_fmt
+from .api import MyelindlApi, MyelindlApiError
+from .utils import sizeof_fmt
 
-@click.command()
+@click.command('list')
 @click.option('--offset', required=False, default=0, help='*optional start offset in model list')
 @click.option('--limit', required=False, default=None, help='*optional start offset in model list')
-def list(offset, limit):
+def do_list(offset, limit):
     results = []
     try:
         api = MyelindlApi()
@@ -97,27 +98,23 @@ def pull(tag, output_dir):
 @click.option('--model-dir', required=True, help='target model directory')
 @click.option('--description', required=False, default='', help='model description')
 @click.option('--type', required=False, default='file', help='model type')
-def push(tag, model_dir, description, type):
+def push(tag, model_dir, description, _type):
     if not os.path.exists(model_dir):
         click.echo('model-dir: {} not exists!'.format(model_dir))
 
     temp_dir = 'mlt_tmp-{}'.format(str(uuid.uuid1())[:8])
     try:
         api = MyelindlApi()
-        api.data_upload(model_dir, temp_dir)
-
-        dataset_id = id if id else ''
-        dataset_type = type if type else 'file'
-        
+        # api.data_upload(model_dir, temp_dir)
         result = api.model_push(
             tag,
             temp_dir,
             description,
-            type,
+            _type,
         )
-        click.echo( 'Model {} pushed.'.format(tag))
+        click.echo( 'Model {} pushed, {}'.format(tag, result))
     except MyelindlApiError as e:
-        print str(e)
+        logging.warning("{}".format(e))
         click.echo( 'Dataset publish fail, due to {}'.format(str(e)))
         raise
 
@@ -145,7 +142,7 @@ def info(tag):
     except MyelindlApiError as e:
         click.echo('Fail due to {}'.format(str(e)))
         raise
-    
+
     longest = max(len(str(v)) for v in result.values())
     longest = longest if longest >= 10 else 10
     template = '| {:>16} | {:>%d} |'% longest
@@ -166,7 +163,7 @@ def model():
     pass
 
 
-model.add_command(list)
+model.add_command(do_list)
 model.add_command(versions)
 model.add_command(info)
 model.add_command(push)

@@ -1,41 +1,41 @@
 import os
-import click
 import uuid
-from api import MyelindlApi, MyelindlApiError
-from utils import sizeof_fmt
+import click
+from .api import MyelindlApi, MyelindlApiError
+from .utils import sizeof_fmt
 
-'''
-@click.command()
-@click.option('dataset_type', '--type', type=click.Choice(READERS.keys()), required=True)  # noqa
-@click.option('--data-dir', required=True, help='Where to locate the original data.')  # noqa
-@click.option('--output-dir', required=True, help='Where to save the transformed data.')  # noqa
-@click.option('splits', '--split', required=True, multiple=True, help='The splits to transform (ie. train, test, val).')  # noqa
-@click.option('--debug', is_flag=True, help='Set level logging to DEBUG.')
-def conversion(dataset_type, data_dir,  output_dir, splits, debug):
-    from readers import get_reader, READERS
-    from writers import get_writer
-    import tensorflow as tf
-    tf.logging.set_verbosity(tf.logging.INFO)
-    if debug:
-        tf.logging.set_verbosity(tf.logging.DEBUG)
 
-    try:
-        reader = get_reader(dataset_type)
-    except ValueError as e:
-        tf.logging.error('Error getting reader: {}'.format(e))
-        return
+# @click.command()
+# @click.option('dataset_type', '--type', type=click.Choice(READERS.keys()), required=True)  # noqa
+# @click.option('--data-dir', required=True, help='Where to locate the original data.')  # noqa
+# @click.option('--output-dir', required=True, help='Where to save the transformed data.')  # noqa
+# @click.option('splits', '--split', required=True,
+#               multiple=True, help='The splits to transform (ie. train, test, val).')  # noqa
+# @click.option('--debug', is_flag=True, help='Set level logging to DEBUG.')
+# def conversion(dataset_type, data_dir,  output_dir, splits, debug):
+#     from readers import get_reader, READERS
+#     from writers import get_writer
+#     import tensorflow as tf
+#     tf.logging.set_verbosity(tf.logging.INFO)
+#     if debug:
+#         tf.logging.set_verbosity(tf.logging.DEBUG)
 
-    try:
-        writer = get_writer(dataset_type)
-        for split in splits:
-            split_reader = reader(data_dir, split)
-            writer = writer(split_reader, output_dir, split)
-            writer.save()
+#     try:
+#         reader = get_reader(dataset_type)
+#     except ValueError as e:
+#         tf.logging.error('Error getting reader: {}'.format(e))
+#         return
 
-            tf.logging.info('Composition per class ({})'.format(split))
-    except ValueError as e:
-        tf.logging.error('Error reading dataset: {}'.format(e))
-'''
+#     try:
+#         writer = get_writer(dataset_type)
+#         for split in splits:
+#             split_reader = reader(data_dir, split)
+#             writer = writer(split_reader, output_dir, split)
+#             writer.save()
+
+#             tf.logging.info('Composition per class ({})'.format(split))
+#     except ValueError as e:
+#         tf.logging.error('Error reading dataset: {}'.format(e))
 
 
 @click.command()
@@ -44,7 +44,7 @@ def conversion(dataset_type, data_dir,  output_dir, splits, debug):
 @click.option('--id', required=False, help="Specify id to update published dataset.")
 @click.option('--type', required=False, help="Specify type of published dataset.(ex: object, file)")
 @click.option('--description', required=False, help='Dataset description')
-def publish(data_dir, name, id, type, description):
+def publish(data_dir, name, _id, _type, description):
 
     if not os.path.exists(data_dir):
         click.echo('data-dir: {} not exists!'.format(data_dir))
@@ -52,41 +52,41 @@ def publish(data_dir, name, id, type, description):
     temp_dir = 'mlt_tmp-{}'.format(str(uuid.uuid1())[:8])
     try:
         api = MyelindlApi()
-        api.data_upload(data_dir, temp_dir)
+        # api.data_upload(data_dir, temp_dir)
 
-        dataset_id = id if id else ''
-        dataset_type = type if type else 'file'
-        
-        result = api.publish_dataset(
-            id=dataset_id,
-            type=dataset_type,
+        dataset_id = _id if _id else ''
+        dataset_type = _type if _type else 'file'
+
+        result = api.dataset_publish(
+            _id=dataset_id,
+            _type=dataset_type,
             name=name,
             description=description,
             data_dir=temp_dir,
         )
-        
+
         click.echo('Dataset {} published with id {}'.format(name, result['id']))
     except MyelindlApiError as e:
-        click.echo(u'Dataset publish fail, due to {}'.format(str(e)))
+        click.echo('Dataset publish fail, due to {}'.format(str(e)))
         raise
 
 
 @click.command()
 @click.option('id', '--id', required=True, help="Which dataset you want to unpublish")
-def unpublish(id):
+def unpublish(_id):
     api = MyelindlApi()
-    try: 
-        result = api.unpublish_dataset(id)
-        click.echo('Dataset {} unpublished'.format(id))
+    try:
+        api.dataset_unpublish(_id)
+        click.echo('Dataset {} unpublished'.format(_id))
     except MyelindlApiError as e :
         click.echo('Fail due to {}'.format(str(e)))
         raise
 
 
-@click.command()
-def list():
+@click.command('list')
+def do_list():
     api = MyelindlApi()
-    try: 
+    try:
         result = api.dataset_list()
     except MyelindlApiError as e :
         click.echo('Fail due to {}'.format(str(e)))
@@ -118,14 +118,14 @@ def list():
 
 @click.command()
 @click.option('id', '--id', required=True, help="Which dataset you want to read information")
-def info(id):
+def info(_id):
     api = MyelindlApi()
-    try: 
-        result = api.get_dataset_info(id)
+    try:
+        result = api.dataset_info(_id)
     except MyelindlApiError as e :
         click.echo('Fail due to {}'.format(str(e)))
         raise
-    
+
     template = '| {:>20} | {:>30}|'
     header = template.format('Field', 'Value')
 
@@ -142,11 +142,11 @@ def info(id):
 @click.command()
 @click.option('--id',required=True)
 @click.option('dir','--dir',required=False)
-def browse(id, dir):
+def browse(_id, _dir):
 
     api = MyelindlApi()
-    try: 
-        result = api.get_dataset_items(id, dir)
+    try:
+        result = api.dataset_items(_id, _dir)
         for file in result:
             if file['type'] == 'dir':
                 click.echo('{}/'.format(file['basename']))
@@ -163,6 +163,6 @@ def dataset():
 #dataset.add_command(conversion)
 #dataset.add_command(publish)
 #dataset.add_command(unpublish)
-dataset.add_command(list)
+dataset.add_command(do_list)
 #dataset.add_command(browse)
 #dataset.add_command(info)
