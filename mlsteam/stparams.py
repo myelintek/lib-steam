@@ -1,4 +1,5 @@
 import os
+import click
 import logging
 import yaml
 
@@ -22,9 +23,9 @@ def get_value(key, default=None):
     for k, v in params["params"].iteritems():
         if key == k:
             if isinstance(params["params"][key], list):
-                logging.warning("key {} is a list, use first value".format(key))
+                click.echo("key {} is a list, use first value".format(key))
                 return params["params"][key][0]
-            logging.info("use {}: {}".format(k, v))
+            click.echo("use {}: {}".format(k, v))
             return params["params"][key]
-    logging.warning("use default value for {}, undefined variable.".format(key))
+    click.echo("use default value for {}, undefined variable.".format(key))
     return default

@@ -55,8 +55,8 @@ class Track(object):
             self._consumer.wake_up()
             self._wait_queu_empty(self._cache)
             self._consumer.interrupt()
+            click.echo("mlsteam-client stopped")
         self._consumer.join()
-        click.echo("mlsteam-client stopped")
 
     def _wait_queu_empty(self, cache: "DiskCache"):
         while True:
