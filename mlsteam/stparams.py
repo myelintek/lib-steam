@@ -23,9 +23,9 @@ def get_value(key, default=None):
     for k, v in params["params"].iteritems():
         if key == k:
             if isinstance(params["params"][key], list):
-                click.echo("key {} is a list, use first value".format(key))
+                click.echo("hyperparameter - {}: {}".format(key, params["params"][key][0]))
                 return params["params"][key][0]
-            click.echo("use {}: {}".format(k, v))
+            click.echo("hyperparameter - {}: {}".format(key, params["params"][key]))
             return params["params"][key]
-    click.echo("use default value for {}, undefined variable.".format(key))
+    click.echo("hyperparameter - {}: {}(default)".format(key, default))
     return default
