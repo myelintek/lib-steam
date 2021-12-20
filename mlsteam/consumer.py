@@ -1,3 +1,4 @@
+import click
 import platform
 import threading
 import queue
@@ -10,6 +11,7 @@ from mlsteam.api_clients.credential import Credential
 from mlsteam.version import __version__
 from mlsteam.exceptions import MLSteamInvalidProjectNameException
 ROOT_PATH = ".mlsteam"
+MAX_AGGREGATE_LOG = 3000
 
 
 class ConsumerThread(threading.Thread):
@@ -31,7 +33,7 @@ class ConsumerThread(threading.Thread):
         self._apiclient = apiclient
         self._puuid = project_uuid
         self._track_bucket_name = track_bucket_name
-        print(f"Thread, puuid: {project_uuid}, bucket_name: {track_bucket_name}")
+        click.echo("Initialized track background thread")
 
     def is_running(self):
         return self._is_running
@@ -71,12 +73,13 @@ class ConsumerThread(threading.Thread):
                     self._track_bucket_name
                 )
         except Exception as e:
-            print("error in api thread: {}".format(e))
+            click.echo("Error in mlsteam client api: {}".format(e))
 
 
 class DiskCache(object):
-    def __init__(self, track_path):
+    def __init__(self, track_path, debug=False):
         self._queue = queue.Queue()
+        self._debug = debug
         self.track_path = Path(ROOT_PATH, track_path)
         if not self.track_path.exists():
             self.track_path.mkdir(parents=True)
@@ -94,7 +97,7 @@ class DiskCache(object):
         self._queue.put(op)
 
     def process(self, apiclient: "ApiClient", bucket_name: str):
-        i = 100
+        i = MAX_AGGREGATE_LOG
         log_aggregate = {}
         while (not self._queue.empty()) and (i > 0):
             i = i - 1
@@ -126,6 +129,8 @@ class DiskCache(object):
                     obj=value,
                     part_offset='-1'
                 )
+            if self._debug:
+                click.echo("queue size: {}".format(self.queue_size()))
 
     def _write_config(self, content):
         for (key, value) in content.items():
@@ -180,49 +185,42 @@ class ApiClient(object):
                 validate_response=False
             ),
             http_client=self.http_client,
-            # request_headers={
-            #     'Authorization': f'Bearer {self.credential.api_token}'
-            # }
         )
-        # self._request_options = {
-        #     'headers': {
-        #         'Authorization': f'Bearer {self.credential.api_token}'
-        #     }
-        # }
-        # for tag in dir(self.swagger_client):
-        #     for _api in dir(getattr(self.swagger_client, tag)):
-        #         print('\t{}.{}'.format(tag, _api))
-
 
     def get_project(self, name):
         result = self.swagger_client.project.listProject(
-            # _request_options=self._request_options,
-            name=name).result()
-        # TBD
-        print(result)
+            name=name
+        ).result()
         if result:
             project = result[0]
             if project:
+                click.echo("Verified project from server, get project uuid {}".format(project['uuid']))
                 return project['uuid']
         raise MLSteamInvalidProjectNameException()
 
     def create_track(self, project_uuid):
         result = self.swagger_client.track.createTrack(
-            # _request_options=self._request_options,
-            puuid=project_uuid).result()
-        print(result)
+            puuid=project_uuid
+        ).result()
+        click.echo("Create new track '{}' under project".format(result['name']))
         return result
 
     def put_file(self, bucket_name: str, obj_path: str, obj: bytes, part_offset: int = None):
         result = self.swagger_client.object.putObject(
-            # _request_options=self._request_options,
             bucket_name=bucket_name,
             obj_path=obj_path,
             obj=obj,
             part_offset=part_offset,
-            part_size=len(obj)).result()
-        print(result)
+            part_size=len(obj)
+        ).result()
         return result
+
+    def add_tags(self, project_uuid, track_id, tags: list):
+        return self.swagger_client.track.addTagTrack(
+            puuid=project_uuid,
+            tid=track_id,
+            tags=tags
+        )
 
 
 def create_http_client():

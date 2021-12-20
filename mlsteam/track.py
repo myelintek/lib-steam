@@ -1,3 +1,4 @@
+import click
 import atexit
 import threading
 import traceback
@@ -10,22 +11,24 @@ class Track(object):
         track: dict,
         project_uuid: str,
         apiclient: ApiClient,
-        background_jobs: list
+        background_jobs: list,
+        debug: bool
     ):
         self._info = track
         self._project_uuid = project_uuid
         self._lock = threading.RLock()
         self._apiclient = apiclient
         self._background_jobs = background_jobs
+        self._debug = debug
         self._waiting_cond = threading.Condition(lock=self._lock)
-        self._cache = DiskCache(f"{project_uuid}/{track['name']}")
+        self._cache = DiskCache(f"{project_uuid}/{track['name']}", debug=self._debug)
         self._consumer = ConsumerThread(
             self._lock,
             self._cache,
             self._apiclient,
             project_uuid,
             track['bucket_name'],
-            sleep_time=5
+            sleep_time=1
         )
 
     def __exit__(self, exc_type, exc_val, exc_tb):
@@ -53,6 +56,7 @@ class Track(object):
             self._wait_queu_empty(self._cache)
             self._consumer.interrupt()
         self._consumer.join()
+        click.echo("mlsteam-client stopped")
 
     def _wait_queu_empty(self, cache: "DiskCache"):
         while True:
@@ -63,6 +67,9 @@ class Track(object):
 
     def _shutdown_hook(self):
         self.stop()
+
+    def tags_set(self, tags: list):
+        self._apiclient.add_tags(self._project_uuid, self._info['id'], tags)
 
 
 class Handler(object):
@@ -75,7 +82,6 @@ class Handler(object):
         return Handler(self._track, self._cache, self._key)
 
     def __setitem__(self, key, value):
-        print("Handler type: {}".format(self))
         self[key].assign(value)
 
     def assign(self, value):
