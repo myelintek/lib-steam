@@ -3,7 +3,10 @@ import click
 import os
 import json
 import threading
-import mlsteam.keras
+try:
+    import mlsteam.keras
+except ImportError:
+    pass
 import mlsteam.stparams
 from mlsteam.api import MyelindlApi
 from mlsteam.consumer import ApiClient
