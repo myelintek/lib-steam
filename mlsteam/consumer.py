@@ -78,11 +78,18 @@ class ConsumerThread(threading.Thread):
 
 class DiskCache(object):
     def __init__(self, track_path, debug=False):
+        from shutil import rmtree
         self._queue = queue.Queue()
         self._debug = debug
         self.track_path = Path(ROOT_PATH, track_path)
         if not self.track_path.exists():
             self.track_path.mkdir(parents=True)
+        else:
+            for path in self.track_path.glob("**/*"):
+                if path.is_file():
+                    path.unlink()
+                elif path.is_dir():
+                    rmtree(path)
 
     def queue_size(self):
         return self._queue.qsize()
@@ -203,6 +210,14 @@ class ApiClient(object):
             puuid=project_uuid
         ).result()
         click.echo("Create new track '{}' under project".format(result['name']))
+        return result
+
+    def get_track(self, project_uuid, track_id):
+        result = self.swagger_client.track.getTrack(
+            puuid=project_uuid,
+            tid=track_id
+        ).result()
+        click.echo("Get track '{}' under project".format(result['name']))
         return result
 
     def put_file(self, bucket_name: str, obj_path: str, obj: bytes, part_offset: int = None):

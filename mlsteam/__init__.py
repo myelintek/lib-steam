@@ -17,12 +17,17 @@ from mlsteam.exceptions import (
 )
 
 
-def init(project_name=None, api_token=None, debug=False):
+def init(project_name=None, api_token=None, debug=False, track_id=None):
     click.echo("mlsteam-client v{}".format(__version__))
     apiclient = ApiClient(api_token=api_token)
     project_uuid = project_name_lookup(apiclient, project_name)
+    if track_id is None:
+        track_id = os.getenv(envs.MLSTEAM_TRACK_ID)
     # Track
-    track_obj = apiclient.create_track(project_uuid)
+    if track_id:
+        track_obj = apiclient.get_track(project_uuid, track_id)
+    else:
+        track_obj = apiclient.create_track(project_uuid)
 
     # stdout_path = "monitoring/stdout"
     # stderr_path = "monitoring/stderr"
