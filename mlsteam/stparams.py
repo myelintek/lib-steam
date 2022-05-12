@@ -17,7 +17,7 @@ def get_value(key, default=None):
     for _dir in dirs:
         param_file = os.path.join(_dir, filename)
         if os.path.exists(param_file):
-            return
+            break
 
     if not param_file:
         logging.warning(
