@@ -1,7 +1,7 @@
 import os.path
 from setuptools import find_packages, setup
 # from mlsteam.version import __version__
-__version__="0.4.6"
+__version__ = "0.4.7"
 
 with open(
     os.path.join(os.path.abspath(os.path.dirname(__file__)), "README.md"),
@@ -36,10 +36,10 @@ def main():
             include_package_data=True,
             zip_safe=False,
             install_requires=requirements,
-            #scripts=['bin/mc'],
+            # scripts=['bin/mc'],
             data_files=[('bin', ['bin/mc'])],
-            entry_points = {
-                'console_scripts':['mlsteam=mlsteam.cli:cli'],
+            entry_points={
+                'console_scripts': ['mlsteam=mlsteam.cli:cli'],
             },
             classifiers=[
                 "Development Status :: 3 - Alpha",
