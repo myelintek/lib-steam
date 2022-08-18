@@ -15,8 +15,9 @@ def get_value(key, default=None):
     dirs = [os.getcwd(), HOME, os.path.join(HOME, 'lab')]
     param_file = ""
     for _dir in dirs:
-        param_file = os.path.join(_dir, filename)
-        if os.path.exists(param_file):
+        file_lookup = os.path.join(_dir, filename)
+        if os.path.exists(file_lookup):
+            param_file = file_lookup
             break
 
     if not param_file:
@@ -27,7 +28,7 @@ def get_value(key, default=None):
     params = {}
     with open(param_file, encoding='utf-8', mode='r') as f:
         params = yaml.safe_load(f)
-    if "params" not in params:
+    if params is None or "params" not in params:
         logging.warning(
             "use default value for {}, undefined variable.".format(key))
         return default
