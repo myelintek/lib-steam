@@ -87,7 +87,7 @@ class DiskCache(object):
         self._queue = queue.Queue()
         self._debug = debug
         self.track_path = Path(ROOT_PATH, track_path)
-        self._matric_keys = set()
+        self._metric_keys = set()
         if not self.track_path.exists():
             self.track_path.mkdir(parents=True)
         else:
@@ -121,7 +121,7 @@ class DiskCache(object):
             elif op.type == "log":
                 self._write_log(op.content)
                 for (key, value) in op.content.items():
-                    self._matric_keys.add(key)
+                    self._metric_keys.add(key)
                     if isinstance(value, str):
                         value = value.encode('utf-8')
                     if key in log_aggregate:
@@ -165,9 +165,9 @@ class DiskCache(object):
             click.echo("queue size: {}".format(self.queue_size()))
 
     def on_done(self, apiclient: "ApiClient", bucket_name: str):
-        metric_file = {".metric_key": "\n".join(list(self._matric_keys))}
+        metric_file = {".metric_key": "\n".join(list(self._metric_keys))}
         self._sync_file(apiclient, metric_file, bucket_name)
-        self._matric_keys.clear()
+        self._metric_keys.clear()
 
 
 class QueueOp(object):
