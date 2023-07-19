@@ -166,8 +166,9 @@ class DiskCache(object):
             click.echo("queue size: {}".format(self.queue_size()))
 
     def on_done(self, apiclient: "ApiClient", bucket_name: str):
+        summary_file = ".summary-file.yaml"
         summary = dict(metrics=list(self._metric_keys))
-        metric_file = {".metric_key": yaml.dump(summary)}
+        metric_file = {summary_file: yaml.dump(summary)}
         self._sync_file(apiclient, metric_file, bucket_name)
         self._metric_keys.clear()
 
