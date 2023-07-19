@@ -91,7 +91,6 @@ class Handler(object):
             self._cache.assign(self._key, value)
 
     def log(self, value):
-        _folder = "mlsteam-logs"
-        merged_key = os.path.join(_folder, self._key)
         with self._track.lock():
-            self._cache.log(merged_key, value)
+            self._cache.log(self._key, value)
+

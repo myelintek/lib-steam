@@ -2,6 +2,7 @@ import click
 import platform
 import threading
 import queue
+import yaml
 from urllib.parse import urlparse
 from pathlib import Path
 from time import time
@@ -117,7 +118,7 @@ class DiskCache(object):
             op = self._queue.get()
             if op.type == "config":
                 self._write_config(op.content)
-                self._sync_file(apiclient, op.content, bucket_name)
+                self._sync_file(apiclient, op.content, bucket_name, "-1")
             elif op.type == "log":
                 self._write_log(op.content)
                 for (key, value) in op.content.items():
@@ -165,7 +166,8 @@ class DiskCache(object):
             click.echo("queue size: {}".format(self.queue_size()))
 
     def on_done(self, apiclient: "ApiClient", bucket_name: str):
-        metric_file = {".metric_key": "\n".join(list(self._metric_keys))}
+        summary = dict(metrics=list(self._metric_keys))
+        metric_file = {".metric_key": yaml.dump(summary)}
         self._sync_file(apiclient, metric_file, bucket_name)
         self._metric_keys.clear()
 
