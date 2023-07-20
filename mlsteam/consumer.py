@@ -66,7 +66,6 @@ class ConsumerThread(threading.Thread):
                     self._event.clear()
                     # sleep for self._sleep_time
         finally:
-            self._cache.on_done(self._apiclient, self._track_bucket_name)
             self._apiclient.update_track(self._puuid, self._track_id, 'inactive')
             self._is_running = False
 
@@ -88,7 +87,7 @@ class DiskCache(object):
         self._queue = queue.Queue()
         self._debug = debug
         self.track_path = Path(ROOT_PATH, track_path)
-        self._metric_keys = set()
+        self._metadata = dict(logs=set())
         if not self.track_path.exists():
             self.track_path.mkdir(parents=True)
         else:
@@ -118,11 +117,13 @@ class DiskCache(object):
             op = self._queue.get()
             if op.type == "config":
                 self._write_config(op.content)
-                self._sync_file(apiclient, op.content, bucket_name, "-1")
+                self._sync_file(apiclient, op.content, bucket_name)
             elif op.type == "log":
                 self._write_log(op.content)
                 for (key, value) in op.content.items():
-                    self._metric_keys.add(key)
+                    if key not in self._metadata['logs']:
+                        self._metadata['logs'].add(key)
+                        self._sync_metadata(apiclient, bucket_name)
                     if isinstance(value, str):
                         value = value.encode('utf-8')
                     if key in log_aggregate:
@@ -152,6 +153,14 @@ class DiskCache(object):
             with key_path.open('a') as f:
                 f.write(f"{tm}, {value}\n")
 
+    def _sync_metadata(self, apiclient: "ApiClient", bucket_name: str):
+        metadata_file = ".track_metadata.yaml"
+        data = {}
+        for meta in self._metadata:
+            data[meta] = list(self._metadata[meta])
+        content = {metadata_file: yaml.dump(data)}
+        self._sync_file(apiclient, content, bucket_name)
+
     def _sync_file(self, apiclient: "ApiClient", content: dict, bucket_name: str, part_offset: str = None):
         for (keypath, value) in content.items():
             if isinstance(value, str):
@@ -164,13 +173,6 @@ class DiskCache(object):
             )
         if self._debug:
             click.echo("queue size: {}".format(self.queue_size()))
-
-    def on_done(self, apiclient: "ApiClient", bucket_name: str):
-        summary_file = ".summary-file.yaml"
-        summary = dict(metrics=list(self._metric_keys))
-        metric_file = {summary_file: yaml.dump(summary)}
-        self._sync_file(apiclient, metric_file, bucket_name)
-        self._metric_keys.clear()
 
 
 class QueueOp(object):
