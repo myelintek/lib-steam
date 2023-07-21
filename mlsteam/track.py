@@ -1,4 +1,5 @@
 import click
+import os
 import atexit
 import threading
 import traceback
@@ -8,12 +9,12 @@ from mlsteam.consumer import ApiClient, DiskCache, ConsumerThread
 
 class Track(object):
     def __init__(self,
-        track: dict,
-        project_uuid: str,
-        apiclient: ApiClient,
-        background_jobs: list,
-        debug: bool
-    ):
+                 track: dict,
+                 project_uuid: str,
+                 apiclient: ApiClient,
+                 background_jobs: list,
+                 debug: bool
+                 ):
         self._info = track
         self._project_uuid = project_uuid
         self._lock = threading.RLock()
@@ -27,6 +28,7 @@ class Track(object):
             self._cache,
             self._apiclient,
             project_uuid,
+            track['id'],
             track['bucket_name'],
             sleep_time=1
         )
@@ -91,3 +93,4 @@ class Handler(object):
     def log(self, value):
         with self._track.lock():
             self._cache.log(self._key, value)
+

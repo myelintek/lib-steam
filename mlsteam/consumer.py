@@ -2,6 +2,7 @@ import click
 import platform
 import threading
 import queue
+import yaml
 from urllib.parse import urlparse
 from pathlib import Path
 from time import time
@@ -16,13 +17,14 @@ MAX_AGGREGATE_LOG = 3000
 
 class ConsumerThread(threading.Thread):
     def __init__(self,
-        lock: threading.RLock,
-        cache: "DiskCache",
-        apiclient: "ApiClient",
-        project_uuid: str,
-        track_bucket_name: str,
-        sleep_time: int
-    ):
+                 lock: threading.RLock,
+                 cache: "DiskCache",
+                 apiclient: "ApiClient",
+                 project_uuid: str,
+                 track_id: int,
+                 track_bucket_name: str,
+                 sleep_time: int
+                 ):
         super().__init__(daemon=True)
         self._lock = lock
         self._sleep_time = sleep_time
@@ -32,6 +34,7 @@ class ConsumerThread(threading.Thread):
         self._cache = cache
         self._apiclient = apiclient
         self._puuid = project_uuid
+        self._track_id = track_id
         self._track_bucket_name = track_bucket_name
         click.echo("Initialized track background thread")
 
@@ -51,6 +54,7 @@ class ConsumerThread(threading.Thread):
     def run(self):
         self._is_running = True
         try:
+            self._apiclient.update_track(self._puuid, self._track_id, 'active')
             while not self._interrupted:
                 # print("consumer start")
                 self.work()
@@ -62,6 +66,7 @@ class ConsumerThread(threading.Thread):
                     self._event.clear()
                     # sleep for self._sleep_time
         finally:
+            self._apiclient.update_track(self._puuid, self._track_id, 'inactive')
             self._is_running = False
 
     def work(self):
@@ -82,6 +87,7 @@ class DiskCache(object):
         self._queue = queue.Queue()
         self._debug = debug
         self.track_path = Path(ROOT_PATH, track_path)
+        self._metadata = dict(logs=set())
         if not self.track_path.exists():
             self.track_path.mkdir(parents=True)
         else:
@@ -111,17 +117,13 @@ class DiskCache(object):
             op = self._queue.get()
             if op.type == "config":
                 self._write_config(op.content)
-                for (keypath, value) in op.content.items():
-                    if isinstance(value, str):
-                        value = value.encode('utf-8')
-                    apiclient.put_file(
-                        bucket_name=bucket_name,
-                        obj_path=keypath,
-                        obj=value
-                    )
+                self._sync_file(apiclient, op.content, bucket_name)
             elif op.type == "log":
                 self._write_log(op.content)
                 for (key, value) in op.content.items():
+                    if key not in self._metadata['logs']:
+                        self._metadata['logs'].add(key)
+                        self._sync_metadata(apiclient, bucket_name)
                     if isinstance(value, str):
                         value = value.encode('utf-8')
                     if key in log_aggregate:
@@ -129,15 +131,7 @@ class DiskCache(object):
                     else:
                         log_aggregate[key] = value
         if log_aggregate:
-            for (keypath, value) in log_aggregate.items():
-                apiclient.put_file(
-                    bucket_name=bucket_name,
-                    obj_path=keypath,
-                    obj=value,
-                    part_offset='-1'
-                )
-            if self._debug:
-                click.echo("queue size: {}".format(self.queue_size()))
+            self._sync_file(apiclient, log_aggregate, bucket_name, "-1")
 
     def _write_config(self, content):
         for (key, value) in content.items():
@@ -158,6 +152,27 @@ class DiskCache(object):
             tm = time()
             with key_path.open('a') as f:
                 f.write(f"{tm}, {value}\n")
+
+    def _sync_metadata(self, apiclient: "ApiClient", bucket_name: str):
+        metadata_file = ".track_metadata.yaml"
+        data = {}
+        for meta in self._metadata:
+            data[meta] = list(self._metadata[meta])
+        content = {metadata_file: yaml.dump(data)}
+        self._sync_file(apiclient, content, bucket_name)
+
+    def _sync_file(self, apiclient: "ApiClient", content: dict, bucket_name: str, part_offset: str = None):
+        for (keypath, value) in content.items():
+            if isinstance(value, str):
+                value = value.encode('utf-8')
+            apiclient.put_file(
+                bucket_name=bucket_name,
+                obj_path=keypath,
+                obj=value,
+                part_offset=part_offset
+            )
+        if self._debug:
+            click.echo("queue size: {}".format(self.queue_size()))
 
 
 class QueueOp(object):
@@ -218,6 +233,15 @@ class ApiClient(object):
             tid=track_id
         ).result()
         click.echo("Get track '{}' under project".format(result['name']))
+        return result
+
+    def update_track(self, project_uuid, track_id, status):
+        result = self.swagger_client.track.updateTrack(
+            puuid=project_uuid,
+            tid=track_id,
+            status=status
+        ).result()
+        click.echo("Update track '{}' status: {}".format(track_id, status))
         return result
 
     def put_file(self, bucket_name: str, obj_path: str, obj: bytes, part_offset: int = None):
